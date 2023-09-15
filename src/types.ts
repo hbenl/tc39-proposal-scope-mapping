@@ -13,12 +13,20 @@ export interface SourcemapScopeBinding {
   expression: string;
 }
 
+export enum ScopeType {
+  ANONYMOUS_FUNCTION = 0,
+  NAMED_FUNCTION = 1,
+  OTHER = 2,
+}
+
 export interface SourcemapScope {
+  type: ScopeType;
+  isInGeneratedSource: boolean;
+  isInOriginalSource: boolean;
+  name: string | null;
   start: Location;
   end: Location;
   bindings: SourcemapScopeBinding[];
-  isInGeneratedSource: boolean;
-  isInOriginalSource: boolean;
 }
 
 export interface PrimitiveDebuggerValue {

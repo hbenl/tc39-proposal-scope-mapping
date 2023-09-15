@@ -1,8 +1,13 @@
+import { decodeScopes } from "../src/decodeScopes";
 import { getOriginalScopes } from "../src/getOriginalScopes";
-import { DebuggerScope, SourcemapScope } from "../src/types";
+import { DebuggerScope, ScopeType, SourcemapScope } from "../src/types";
 
-const sourcemapScopes: SourcemapScope[] = [
+const scopeNames = ["outer", "f", "inner", "g", "num", "a", "num_plus_one", "b", "inner", "value", "value_plus_one"];
+const scopes = "WCCUKAC,OACCQEEGIKMO,OEEGKISKUO";
+const decodedScopes: SourcemapScope[] = [
   {
+    type: ScopeType.OTHER,
+    name: null,
     start: { line: 1, column: 1 },
     end: { line: 10, column: 5 },
     isInOriginalSource: true,
@@ -12,6 +17,8 @@ const sourcemapScopes: SourcemapScope[] = [
     ]
   },
   {
+    type: ScopeType.NAMED_FUNCTION,
+    name: "outer",
     start: { line: 1, column: 1 },
     end: { line: 8, column: 2 },
     isInOriginalSource: true,
@@ -23,6 +30,8 @@ const sourcemapScopes: SourcemapScope[] = [
     ]
   },
   {
+    type: ScopeType.NAMED_FUNCTION,
+    name: "inner",
     start: { line: 2, column: 3 },
     end: { line: 5, column: 4 },
     isInOriginalSource: true,
@@ -34,7 +43,11 @@ const sourcemapScopes: SourcemapScope[] = [
   },
 ];
 
-test("paused at line 4", () => {
+test("decode scopes from sourcemap", () => {
+  expect(decodeScopes(scopes, scopeNames)).toStrictEqual(decodedScopes);
+});
+
+test("original scopes at line 4", () => {
   const debuggerScopes: DebuggerScope[] = [
     {
       // The global scope, we only show one example binding
@@ -64,7 +77,7 @@ test("paused at line 4", () => {
       ]
     },
   ];
-  expect(getOriginalScopes({ line: 4, column: 1 }, sourcemapScopes, debuggerScopes)).toMatchInlineSnapshot(`
+  expect(getOriginalScopes({ line: 4, column: 1 }, decodedScopes, debuggerScopes)).toMatchInlineSnapshot(`
 [
   {
     "bindings": [

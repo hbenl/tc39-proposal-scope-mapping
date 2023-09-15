@@ -13,5 +13,8 @@
     "jest": "^29.6.4",
     "ts-jest": "^29.1.1",
     "typescript": "^5.2.2"
+  },
+  "dependencies": {
+    "vlq": "^2.0.4"
   }
 }
