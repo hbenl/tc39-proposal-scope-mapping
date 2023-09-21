@@ -1,4 +1,5 @@
 import { decodeScopes } from "../src/decodeScopes";
+import { encodeScopes } from "../src/encodeScopes";
 import { getOriginalScopes } from "../src/getOriginalScopes";
 import { DebuggerScope, ScopeType, SourcemapScope } from "../src/types";
 
@@ -40,6 +41,12 @@ const decodedScopes: SourcemapScope[] = [
 
 test("decode scopes from sourcemap", () => {
   expect(decodeScopes(scopes, scopeNames)).toStrictEqual(decodedScopes);
+});
+
+test("encode scopes to sourcemap", () => {
+  const { scopes: encodedScopes, names } = encodeScopes(decodedScopes);
+  expect(encodedScopes).toBe(scopes);
+  expect(names).toStrictEqual(scopeNames);
 });
 
 test("original scopes at line 5", () => {
