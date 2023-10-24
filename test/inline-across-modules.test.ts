@@ -3,6 +3,8 @@ import { encodeScopes } from "../src/encodeScopes";
 import { getOriginalScopes } from "../src/getOriginalScopes";
 import { DebuggerScope, ScopeType, SourcemapScope } from "../src/types";
 
+// see https://github.com/tc39/source-map-rfc/issues/37#issuecomment-1777452640
+
 const scopeNames = ["increment", "l", "f", "num", "o", "x", "e"];
 const scopes = "SCCIgD,UCCCWACED,UECIgDEDGI,UGCI+BADED,MEGCI+BKM";
 const decodedScopes: SourcemapScope[] = [

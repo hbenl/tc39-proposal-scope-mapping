@@ -3,6 +3,7 @@ import { encodeScopes } from "../src/encodeScopes";
 import { getOriginalScopes } from "../src/getOriginalScopes";
 import { DebuggerScope, ScopeType, SourcemapScope } from "../src/types";
 
+// see https://github.com/tc39/source-map-rfc/issues/37#issuecomment-1699356967
 const scopeNames = ["foo", "x", "x1", "x2"];
 const scopes = "WCCOE,OACCOECE,MAICKoBCG";
 const decodedScopes: SourcemapScope[] = [
