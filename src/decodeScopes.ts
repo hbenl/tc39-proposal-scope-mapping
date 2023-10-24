@@ -25,7 +25,7 @@ export function decodeScope(encodedScope: string, scopeNames: string[]): Sourcem
   const bindings: SourcemapScopeBinding[] = [];
   while (numbers.length > 0) {
     const varname = scopeNames[numbers.shift()!];
-    const expression = scopeNames[numbers.shift()!];
+    const expression = scopeNames[numbers.shift()!] ?? null;
     bindings.push({ varname, expression });
   }
 

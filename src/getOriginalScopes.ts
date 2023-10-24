@@ -36,7 +36,7 @@ export function getOriginalScopes(
     const originalBindings = scope.bindings.map(({ varname, expression }) => {
       // We use `lookupScopeValue()`, which only works if `expression` is the name of a
       // generated variable, to support arbitrary expressions we'd need to use `evaluateWithScopes()`
-      const value = lookupScopeValue(expression, enclosingDebuggerScopes);
+      const value = expression !== null ? lookupScopeValue(expression, enclosingDebuggerScopes) : { unavailable: true } as UnavailableValue;
       return { varname, value };
     });
 

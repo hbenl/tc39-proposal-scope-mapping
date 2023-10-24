@@ -10,7 +10,7 @@ export interface LocationRange {
 
 export interface SourcemapScopeBinding {
   varname: string;
-  expression: string;
+  expression: string | null;
 }
 
 export enum ScopeType {

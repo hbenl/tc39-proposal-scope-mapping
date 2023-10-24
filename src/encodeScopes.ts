@@ -32,7 +32,7 @@ export function encodeScope(scope: SourcemapScope, names: string[]): string {
 
   for (const binding of scope.bindings) {
     numbers.push(getNameIndex(binding.varname, names));
-    numbers.push(getNameIndex(binding.expression, names));
+    numbers.push(binding.expression !== null ? getNameIndex(binding.expression, names) : -1);
   }
 
   return encode(numbers);
