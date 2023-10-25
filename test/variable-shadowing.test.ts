@@ -3,16 +3,44 @@ import { encodeScopes } from "../src/encodeScopes";
 import { getOriginalFrames } from "../src/getOriginalFrames";
 import { DebuggerScope, ScopeType, SourcemapScope } from "../src/types";
 
-// see https://github.com/tc39/source-map-rfc/issues/37#issuecomment-1699356967
+/**
+Taken from https://github.com/tc39/source-map-rfc/issues/37#issuecomment-1699356967
+
+Original source:
+```javascript
+1 function outer(num) {
+2   function inner(value) {
+3     const value_plus_one = value + 1;
+4     console.log(value_plus_one);
+5   }
+6   const num_plus_one = num + 1;
+7   inner(num_plus_one);
+8 }
+9 outer(1);
+```
+
+Generated source:
+```javascript
+1 function f(a) {
+2   function g(a) {
+3     const b = a + 1;
+4     console.log(b);
+5   }
+6   const b = a + 1;
+7   g(b);
+8 }
+9 f(1);
+```
+*/
 
 const scopeNames = ["outer", "f", "inner", "g", "num", "a", "num_plus_one", "b", "value", "value_plus_one"];
-const scopes = "mBCCUKAC,WACCQEEGIKMO,WEEGKIQKSO";
+const scopes = "mBCCSKAC,WACCQEEGIKMO,WEEGKIQKSO";
 const decodedScopes: SourcemapScope[] = [
   {
     type: ScopeType.OTHER,
     name: null,
     start: { line: 1, column: 1 },
-    end: { line: 10, column: 5 },
+    end: { line: 9, column: 5 },
     isInOriginalSource: true,
     isInGeneratedSource: true,
     isOutermostInlinedScope: false,
@@ -59,7 +87,7 @@ test("encode scopes to sourcemap", () => {
   expect(names).toStrictEqual(scopeNames);
 });
 
-test("original scopes at line 4", () => {
+test("original frames at line 4", () => {
   const debuggerScopes: DebuggerScope[] = [
     {
       // The global scope, we only show one example binding

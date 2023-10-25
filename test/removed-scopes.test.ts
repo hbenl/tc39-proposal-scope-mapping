@@ -3,7 +3,34 @@ import { encodeScopes } from "../src/encodeScopes";
 import { getOriginalFrames } from "../src/getOriginalFrames";
 import { DebuggerScope, ScopeType, SourcemapScope } from "../src/types";
 
-// see https://github.com/tc39/source-map-rfc/issues/37#issuecomment-1699356967
+/**
+Taken from https://github.com/tc39/source-map-rfc/issues/37#issuecomment-1699356967
+
+Original source:
+```javascript
+1 {
+2   let x = 1;
+3   console.log(x);
+4   {
+5     let x = 2;
+6     console.log(x);
+7   }
+8   console.log(x);
+9 }
+```
+
+Generated source:
+```javascript
+1 {
+2   var x1 = 1;
+3   console.log(x1);
+4   var x2 = 2;
+5   console.log(x2);
+6   console.log(x1);
+7 }
+```
+*/
+
 const scopeNames = ["x", "x1", "x2"];
 const scopes = "mBCCOE,mBCCOEAC,kBICKoBAE";
 const decodedScopes: SourcemapScope[] = [
@@ -53,7 +80,7 @@ test("encode scopes to sourcemap", () => {
   expect(names).toStrictEqual(scopeNames);
 });
 
-test("original scopes at line 5", () => {
+test("original frames at line 5", () => {
   const debuggerScopes: DebuggerScope[] = [
     {
       // The global scope, we only show one example binding
