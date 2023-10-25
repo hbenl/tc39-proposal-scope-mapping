@@ -23,6 +23,7 @@ export interface SourcemapScope {
   type: ScopeType;
   isInGeneratedSource: boolean;
   isInOriginalSource: boolean;
+  isOutermostInlinedScope: boolean;
   name: string | null;
   start: Location;
   end: Location;
@@ -50,4 +51,9 @@ export interface DebuggerScopeBinding {
 
 export interface DebuggerScope {
   bindings: DebuggerScopeBinding[];
+}
+
+export interface DebuggerFrame {
+  name: string | null;
+  scopes: DebuggerScope[];
 }

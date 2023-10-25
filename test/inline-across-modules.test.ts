@@ -1,12 +1,12 @@
 import { decodeScopes } from "../src/decodeScopes";
 import { encodeScopes } from "../src/encodeScopes";
-import { getOriginalScopes } from "../src/getOriginalScopes";
+import { getOriginalFrames } from "../src/getOriginalFrames";
 import { DebuggerScope, ScopeType, SourcemapScope } from "../src/types";
 
 // see https://github.com/tc39/source-map-rfc/issues/37#issuecomment-1777452640
 
 const scopeNames = ["increment", "l", "f", "num", "o", "x", "e"];
-const scopes = "SCCIgD,UCCCWACED,UECIgDEDGI,UGCI+BADED,MEGCI+BKM";
+const scopes = "iBCCIgD,sBCCCWACED,kBECIgDEDGI,sBGCI+BACED,UEGCI+BKM";
 const decodedScopes: SourcemapScope[] = [
   {
     type: ScopeType.OTHER,
@@ -15,6 +15,7 @@ const decodedScopes: SourcemapScope[] = [
     end: { line: 4, column: 48 },
     isInOriginalSource: false,
     isInGeneratedSource: true,
+    isOutermostInlinedScope: false,
     bindings: []
   },
   {
@@ -24,6 +25,7 @@ const decodedScopes: SourcemapScope[] = [
     end: { line: 1, column: 11 },
     isInOriginalSource: true,
     isInGeneratedSource: false,
+    isOutermostInlinedScope: true,
     bindings: [
       { varname: "increment", expression: "l" },
       { varname: "f", expression: null },
@@ -36,6 +38,7 @@ const decodedScopes: SourcemapScope[] = [
     end: { line: 4, column: 48 },
     isInOriginalSource: true,
     isInGeneratedSource: false,
+    isOutermostInlinedScope: false,
     bindings: [
       { varname: "f", expression: null },
       { varname: "num", expression: "o" },
@@ -48,6 +51,7 @@ const decodedScopes: SourcemapScope[] = [
     end: { line: 4, column: 31 },
     isInOriginalSource: true,
     isInGeneratedSource: false,
+    isOutermostInlinedScope: true,
     bindings: [
       { varname: "increment", expression: "l" },
       { varname: "f", expression: null },
@@ -60,6 +64,7 @@ const decodedScopes: SourcemapScope[] = [
     end: { line: 4, column: 31 },
     isInOriginalSource: true,
     isInGeneratedSource: false,
+    isOutermostInlinedScope: false,
     bindings: [
       { varname: "x", expression: "e" },
     ]
@@ -92,57 +97,77 @@ test("original scopes at line 4", () => {
       ]
     },
   ];
-  expect(getOriginalScopes({ line: 4, column: 10 }, decodedScopes, debuggerScopes)).toMatchInlineSnapshot(`
+  expect(getOriginalFrames({ line: 4, column: 10 }, decodedScopes, debuggerScopes)).toMatchInlineSnapshot(`
 [
   {
-    "bindings": [
+    "name": "f",
+    "scopes": [
       {
-        "value": {
-          "value": 42,
-        },
-        "varname": "e",
+        "bindings": [
+          {
+            "value": {
+              "value": 42,
+            },
+            "varname": "e",
+          },
+        ],
+      },
+      {
+        "bindings": [
+          {
+            "value": {
+              "value": 2,
+            },
+            "varname": "increment",
+          },
+          {
+            "value": {
+              "unavailable": true,
+            },
+            "varname": "f",
+          },
+        ],
+      },
+      {
+        "bindings": [
+          {
+            "value": {
+              "value": 42,
+            },
+            "varname": "x",
+          },
+        ],
       },
     ],
   },
   {
-    "bindings": [
+    "name": null,
+    "scopes": [
       {
-        "value": {
-          "unavailable": true,
-        },
-        "varname": "f",
+        "bindings": [
+          {
+            "value": {
+              "value": 42,
+            },
+            "varname": "e",
+          },
+        ],
       },
       {
-        "value": {
-          "value": 42,
-        },
-        "varname": "num",
-      },
-    ],
-  },
-  {
-    "bindings": [
-      {
-        "value": {
-          "value": 2,
-        },
-        "varname": "increment",
-      },
-      {
-        "value": {
-          "unavailable": true,
-        },
-        "varname": "f",
-      },
-    ],
-  },
-  {
-    "bindings": [
-      {
-        "value": {
-          "value": 42,
-        },
-        "varname": "x",
+        "bindings": [
+          {
+            "value": {
+              "unavailable": true,
+            },
+            "varname": "f",
+          },
+          {
+            "value": {
+              "value": 42,
+            },
+            "varname": "num",
+          },
+        ],
       },
     ],
   },

@@ -1,11 +1,11 @@
 import { decodeScopes } from "../src/decodeScopes";
 import { encodeScopes } from "../src/encodeScopes";
-import { getOriginalScopes } from "../src/getOriginalScopes";
+import { getOriginalFrames } from "../src/getOriginalFrames";
 import { DebuggerScope, ScopeType, SourcemapScope } from "../src/types";
 
 // see https://github.com/tc39/source-map-rfc/issues/37#issuecomment-1699356967
-const scopeNames = ["foo", "x", "x1", "x2"];
-const scopes = "WCCOE,OACCOECE,MAICKoBCG";
+const scopeNames = ["x", "x1", "x2"];
+const scopes = "mBCCOE,mBCCOEAC,kBICKoBAE";
 const decodedScopes: SourcemapScope[] = [
   {
     type: ScopeType.OTHER,
@@ -14,26 +14,29 @@ const decodedScopes: SourcemapScope[] = [
     end: { line: 7, column: 2 },
     isInOriginalSource: true,
     isInGeneratedSource: true,
+    isOutermostInlinedScope: false,
     bindings: []
   },
   {
-    type: ScopeType.NAMED_FUNCTION,
-    name: "foo",
+    type: ScopeType.OTHER,
+    name: null,
     start: { line: 1, column: 1 },
     end: { line: 7, column: 2 },
     isInOriginalSource: true,
     isInGeneratedSource: true,
+    isOutermostInlinedScope: false,
     bindings: [
       { varname: "x", expression: "x1" },
     ]
   },
   {
-    type: ScopeType.NAMED_FUNCTION,
-    name: "foo",
+    type: ScopeType.OTHER,
+    name: null,
     start: { line: 4, column: 1 },
     end: { line: 5, column: 20 },
     isInOriginalSource: true,
     isInGeneratedSource: false,
+    isOutermostInlinedScope: false,
     bindings: [
       { varname: "x", expression: "x2" },
     ]
@@ -70,38 +73,43 @@ test("original scopes at line 5", () => {
       ]
     },
   ];
-  expect(getOriginalScopes({ line: 5, column: 1 }, decodedScopes, debuggerScopes)).toMatchInlineSnapshot(`
+  expect(getOriginalFrames({ line: 5, column: 1 }, decodedScopes, debuggerScopes)).toMatchInlineSnapshot(`
 [
   {
-    "bindings": [
+    "name": null,
+    "scopes": [
       {
-        "value": {
-          "objectId": 1,
-        },
-        "varname": "document",
+        "bindings": [
+          {
+            "value": {
+              "objectId": 1,
+            },
+            "varname": "document",
+          },
+        ],
       },
-    ],
-  },
-  {
-    "bindings": [],
-  },
-  {
-    "bindings": [
       {
-        "value": {
-          "value": 1,
-        },
-        "varname": "x",
+        "bindings": [],
       },
-    ],
-  },
-  {
-    "bindings": [
       {
-        "value": {
-          "value": 2,
-        },
-        "varname": "x",
+        "bindings": [
+          {
+            "value": {
+              "value": 1,
+            },
+            "varname": "x",
+          },
+        ],
+      },
+      {
+        "bindings": [
+          {
+            "value": {
+              "value": 2,
+            },
+            "varname": "x",
+          },
+        ],
       },
     ],
   },

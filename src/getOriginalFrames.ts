@@ -1,13 +1,13 @@
-import { Location, DebuggerScope, SourcemapScope, UnavailableValue, DebuggerValue } from "./types";
+import { Location, DebuggerScope, SourcemapScope, UnavailableValue, DebuggerValue, DebuggerFrame, ScopeType } from "./types";
 import { assert, compareLocations, isEnclosing, isInRange } from "./util";
 
-// Compute the original scopes given a location, scope information from the sourcemap
+// Compute the original frames and scopes given a location, scope information from the sourcemap
 // and the scopes received from the debugger (containing the bindings for the generated variables)
-export function getOriginalScopes(
+export function getOriginalFrames(
   location: Location,
   sourcemapScopes: SourcemapScope[],
   debuggerScopes: DebuggerScope[]
-): DebuggerScope[] {
+): DebuggerFrame[] {
 
   const scopes = sourcemapScopes.filter(scope => isInRange(location, scope));
   // Sort from outermost to innermost, assuming debuggerScopes is also sorted that way
@@ -21,11 +21,21 @@ export function getOriginalScopes(
 
   // The outermost original scope is identical to the outermost generated scope,
   // which is the global scope
-  const originalScopes: DebuggerScope[] = [debuggerScopes[0]];
+  function createFrame(): DebuggerFrame {
+    return {
+      name: null,
+      scopes: [debuggerScopes[0]]
+    };
+  }
+  const originalFrames: DebuggerFrame[] = [createFrame()];
 
   for (const scope of scopes) {
     if (!scope.isInOriginalSource) {
       continue;
+    }
+
+    if (scope.isOutermostInlinedScope) {
+      originalFrames.unshift(createFrame());
     }
 
     const enclosingGeneratedScopes = sourcemapScopes.filter(
@@ -40,10 +50,16 @@ export function getOriginalScopes(
       return { varname, value };
     });
 
-    originalScopes.push({ bindings: originalBindings });
+    originalFrames[0].scopes.push({ bindings: originalBindings });
+
+    if (scope.type === ScopeType.NAMED_FUNCTION) {
+      originalFrames[0].name = scope.name;
+    } else if (scope.type === ScopeType.ANONYMOUS_FUNCTION) {
+      originalFrames[0].name = "<anonymous>";
+    }
   }
 
-  return originalScopes;
+  return originalFrames;
 }
 
 function lookupScopeValue(varname: string, scopes: DebuggerScope[]) {

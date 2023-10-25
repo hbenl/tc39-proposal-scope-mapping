@@ -11,7 +11,8 @@ export function decodeScope(encodedScope: string, scopeNames: string[]): Sourcem
   const meta = numbers.shift()!;
   const isInGeneratedSource = !!(meta & 1);
   const isInOriginalSource = !!(meta & 2);
-  const type: ScopeType = meta >> 2;
+  const isOutermostInlinedScope = !!(meta & 4);
+  const type: ScopeType = meta >> 3;
   let name: string | null = null;
   if (type === ScopeType.NAMED_FUNCTION) {
     name = scopeNames[numbers.shift()!];
@@ -34,6 +35,7 @@ export function decodeScope(encodedScope: string, scopeNames: string[]): Sourcem
     name,
     isInOriginalSource,
     isInGeneratedSource,
+    isOutermostInlinedScope,
     start: { line: startLine, column: startColumn },
     end: { line: endLine, column: endColumn },
     bindings,

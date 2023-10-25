@@ -17,7 +17,8 @@ export function encodeScope(scope: SourcemapScope, names: string[]): string {
   const meta =
     (scope.isInGeneratedSource ? 1 : 0) +
     (scope.isInOriginalSource ? 2 : 0) +
-    (scope.type << 2);
+    (scope.isOutermostInlinedScope ? 4 : 0) +
+    (scope.type << 3);
   numbers.push(meta);
 
   if (scope.type === ScopeType.NAMED_FUNCTION) {

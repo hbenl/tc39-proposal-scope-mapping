@@ -1,12 +1,12 @@
 import { decodeScopes } from "../src/decodeScopes";
 import { encodeScopes } from "../src/encodeScopes";
-import { getOriginalScopes } from "../src/getOriginalScopes";
+import { getOriginalFrames } from "../src/getOriginalFrames";
 import { DebuggerScope, ScopeType, SourcemapScope } from "../src/types";
 
 // see https://github.com/tc39/source-map-rfc/issues/37#issuecomment-1699356967
 
 const scopeNames = ["outer", "f", "inner", "g", "num", "a", "num_plus_one", "b", "value", "value_plus_one"];
-const scopes = "WCCUKAC,OACCQEEGIKMO,OEEGKIQKSO";
+const scopes = "mBCCUKAC,WACCQEEGIKMO,WEEGKIQKSO";
 const decodedScopes: SourcemapScope[] = [
   {
     type: ScopeType.OTHER,
@@ -15,6 +15,7 @@ const decodedScopes: SourcemapScope[] = [
     end: { line: 10, column: 5 },
     isInOriginalSource: true,
     isInGeneratedSource: true,
+    isOutermostInlinedScope: false,
     bindings: [
       { varname: "outer", expression: "f" },
     ]
@@ -26,6 +27,7 @@ const decodedScopes: SourcemapScope[] = [
     end: { line: 8, column: 2 },
     isInOriginalSource: true,
     isInGeneratedSource: true,
+    isOutermostInlinedScope: false,
     bindings: [
       { varname: "inner", expression: "g" },
       { varname: "num", expression: "a" },
@@ -39,6 +41,7 @@ const decodedScopes: SourcemapScope[] = [
     end: { line: 5, column: 4 },
     isInOriginalSource: true,
     isInGeneratedSource: true,
+    isOutermostInlinedScope: false,
     bindings: [
       { varname: "value", expression: "a" },
       { varname: "value_plus_one", expression: "b" },
@@ -86,63 +89,68 @@ test("original scopes at line 4", () => {
       ]
     },
   ];
-  expect(getOriginalScopes({ line: 4, column: 1 }, decodedScopes, debuggerScopes)).toMatchInlineSnapshot(`
+  expect(getOriginalFrames({ line: 4, column: 1 }, decodedScopes, debuggerScopes)).toMatchInlineSnapshot(`
 [
   {
-    "bindings": [
+    "name": "inner",
+    "scopes": [
       {
-        "value": {
-          "objectId": 1,
-        },
-        "varname": "document",
-      },
-    ],
-  },
-  {
-    "bindings": [
-      {
-        "value": {
-          "objectId": 2,
-        },
-        "varname": "outer",
-      },
-    ],
-  },
-  {
-    "bindings": [
-      {
-        "value": {
-          "objectId": 3,
-        },
-        "varname": "inner",
+        "bindings": [
+          {
+            "value": {
+              "objectId": 1,
+            },
+            "varname": "document",
+          },
+        ],
       },
       {
-        "value": {
-          "value": 1,
-        },
-        "varname": "num",
+        "bindings": [
+          {
+            "value": {
+              "objectId": 2,
+            },
+            "varname": "outer",
+          },
+        ],
       },
       {
-        "value": {
-          "value": 2,
-        },
-        "varname": "num_plus_one",
+        "bindings": [
+          {
+            "value": {
+              "objectId": 3,
+            },
+            "varname": "inner",
+          },
+          {
+            "value": {
+              "value": 1,
+            },
+            "varname": "num",
+          },
+          {
+            "value": {
+              "value": 2,
+            },
+            "varname": "num_plus_one",
+          },
+        ],
       },
-    ],
-  },
-  {
-    "bindings": [
       {
-        "value": {
-          "value": 2,
-        },
-        "varname": "value",
-      },
-      {
-        "value": {
-          "value": 3,
-        },
-        "varname": "value_plus_one",
+        "bindings": [
+          {
+            "value": {
+              "value": 2,
+            },
+            "varname": "value",
+          },
+          {
+            "value": {
+              "value": 3,
+            },
+            "varname": "value_plus_one",
+          },
+        ],
       },
     ],
   },
