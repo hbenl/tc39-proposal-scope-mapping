@@ -62,9 +62,12 @@ export function getOriginalFrames(
   return originalFrames;
 }
 
-function lookupScopeValue(varname: string, scopes: DebuggerScope[]) {
+function lookupScopeValue(expression: string, scopes: DebuggerScope[]): DebuggerValue {
+  if (expression.startsWith('"') && expression.endsWith('"')) {
+    return { value: expression.slice(1, -1) };
+  }
   for (let i = scopes.length - 1; i >= 0; i--) {
-    const binding = scopes[i].bindings.find(binding => binding.varname === varname);
+    const binding = scopes[i].bindings.find(binding => binding.varname === expression);
     if (binding) {
       return binding.value;
     }
