@@ -8,6 +8,10 @@ export interface LocationRange {
   end: Location;
 }
 
+export interface OriginalLocation extends Location {
+  sourceIndex: number;
+}
+
 export interface SourcemapScopeBinding {
   varname: string;
   expression: string | null;
@@ -24,9 +28,12 @@ export interface SourcemapScope {
   isInGeneratedSource: boolean;
   isInOriginalSource: boolean;
   isOutermostInlinedScope: boolean;
+  // this needs to be set if type is NAMED_FUNCTION
   name: string | null;
   start: Location;
   end: Location;
+  // this needs to be set if isOutermostInlinedScope is true
+  callsite: OriginalLocation | null;
   bindings: SourcemapScopeBinding[];
 }
 
@@ -55,5 +62,6 @@ export interface DebuggerScope {
 
 export interface DebuggerFrame {
   name: string | null;
+  location: OriginalLocation;
   scopes: DebuggerScope[];
 }

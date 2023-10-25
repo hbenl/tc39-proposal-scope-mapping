@@ -35,13 +35,14 @@ Original sources:
 */
 
 const scopeNames = ["increment", "l", "f", "num", "o", "x", "e"];
-const scopes = "iBCCMkB,sBCCCWACED,kBECMkBEDGI,sBGCKsBACED,UEGCKsBKM";
+const scopes = "iBCCMkB,sBCCCWAGCACED,kBECMkBEDGI,sBGCKsBAGCACED,UEGCKsBKM";
 const decodedScopes: SourcemapScope[] = [
   {
     type: ScopeType.OTHER,
     name: null,
     start: { line: 1, column: 1 },
     end: { line: 6, column: 18 },
+    callsite: null,
     isInOriginalSource: false,
     isInGeneratedSource: true,
     isOutermostInlinedScope: false,
@@ -52,6 +53,7 @@ const decodedScopes: SourcemapScope[] = [
     name: null,
     start: { line: 1, column: 1 },
     end: { line: 1, column: 11 },
+    callsite: { sourceIndex: 0, line: 3, column: 1 },
     isInOriginalSource: true,
     isInGeneratedSource: false,
     isOutermostInlinedScope: true,
@@ -65,6 +67,7 @@ const decodedScopes: SourcemapScope[] = [
     name: null,
     start: { line: 2, column: 1 },
     end: { line: 6, column: 18 },
+    callsite: null,
     isInOriginalSource: true,
     isInGeneratedSource: false,
     isOutermostInlinedScope: false,
@@ -78,6 +81,7 @@ const decodedScopes: SourcemapScope[] = [
     name: null,
     start: { line: 3, column: 1 },
     end: { line: 5, column: 22 },
+    callsite: { sourceIndex: 0, line: 3, column: 1 },
     isInOriginalSource: true,
     isInGeneratedSource: false,
     isOutermostInlinedScope: true,
@@ -91,6 +95,7 @@ const decodedScopes: SourcemapScope[] = [
     name: "f",
     start: { line: 3, column: 1 },
     end: { line: 5, column: 22 },
+    callsite: null,
     isInOriginalSource: true,
     isInGeneratedSource: false,
     isOutermostInlinedScope: false,
@@ -126,9 +131,19 @@ test("original frames at line 5", () => {
       ]
     },
   ];
-  expect(getOriginalFrames({ line: 5, column: 1 }, decodedScopes, debuggerScopes)).toMatchInlineSnapshot(`
+  expect(getOriginalFrames(
+  { line: 5, column: 1 },
+  { sourceIndex: 1, line: 3, column: 3 },
+  decodedScopes,
+  debuggerScopes
+)).toMatchInlineSnapshot(`
 [
   {
+    "location": {
+      "column": 3,
+      "line": 3,
+      "sourceIndex": 1,
+    },
     "name": "f",
     "scopes": [
       {
@@ -170,6 +185,11 @@ test("original frames at line 5", () => {
     ],
   },
   {
+    "location": {
+      "column": 1,
+      "line": 3,
+      "sourceIndex": 0,
+    },
     "name": null,
     "scopes": [
       {

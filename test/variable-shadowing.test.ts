@@ -41,6 +41,7 @@ const decodedScopes: SourcemapScope[] = [
     name: null,
     start: { line: 1, column: 1 },
     end: { line: 9, column: 5 },
+    callsite: null,
     isInOriginalSource: true,
     isInGeneratedSource: true,
     isOutermostInlinedScope: false,
@@ -53,6 +54,7 @@ const decodedScopes: SourcemapScope[] = [
     name: "outer",
     start: { line: 1, column: 1 },
     end: { line: 8, column: 2 },
+    callsite: null,
     isInOriginalSource: true,
     isInGeneratedSource: true,
     isOutermostInlinedScope: false,
@@ -67,6 +69,7 @@ const decodedScopes: SourcemapScope[] = [
     name: "inner",
     start: { line: 2, column: 3 },
     end: { line: 5, column: 4 },
+    callsite: null,
     isInOriginalSource: true,
     isInGeneratedSource: true,
     isOutermostInlinedScope: false,
@@ -117,9 +120,19 @@ test("original frames at line 4", () => {
       ]
     },
   ];
-  expect(getOriginalFrames({ line: 4, column: 1 }, decodedScopes, debuggerScopes)).toMatchInlineSnapshot(`
+  expect(getOriginalFrames(
+  { line: 4, column: 5 },
+  { sourceIndex: 0, line: 4, column: 5 },
+  decodedScopes,
+  debuggerScopes
+)).toMatchInlineSnapshot(`
 [
   {
+    "location": {
+      "column": 5,
+      "line": 4,
+      "sourceIndex": 0,
+    },
     "name": "inner",
     "scopes": [
       {

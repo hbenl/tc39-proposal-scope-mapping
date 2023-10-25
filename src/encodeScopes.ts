@@ -31,6 +31,13 @@ export function encodeScope(scope: SourcemapScope, names: string[]): string {
   numbers.push(scope.end.line);
   numbers.push(scope.end.column);
 
+  if (scope.isOutermostInlinedScope) {
+    assert(scope.callsite);
+    numbers.push(scope.callsite.sourceIndex);
+    numbers.push(scope.callsite.line);
+    numbers.push(scope.callsite.column);
+  }
+
   for (const binding of scope.bindings) {
     numbers.push(getNameIndex(binding.varname, names));
     numbers.push(binding.expression !== null ? getNameIndex(binding.expression, names) : -1);

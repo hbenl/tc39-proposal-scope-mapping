@@ -1,7 +1,8 @@
 import { decodeScopes } from "../src/decodeScopes";
 import { encodeScopes } from "../src/encodeScopes";
 import { getOriginalFrames } from "../src/getOriginalFrames";
-import { DebuggerScope, ScopeType, SourcemapScope } from "../src/types";
+import { DebuggerScope, Location, OriginalLocation, ScopeType, SourcemapScope } from "../src/types";
+import { assert } from "../src/util";
 
 /**
 Original source:
@@ -26,13 +27,14 @@ Generated source:
 */
 
 const scopeNames = ["f", "g", "x", '"amet"', '"ipsum"'];
-const scopes = "mBCCG4CADCD,cCCCE+BEG,cACCC4BEI";
+const scopes = "mBCCG4CADCD,cCCCE+BAQCEG,cACCC4BAKGEI";
 const decodedScopes: SourcemapScope[] = [
   {
     type: ScopeType.OTHER,
     name: null,
     start: { line: 1, column: 1 },
     end: { line: 3, column: 44 },
+    callsite: null,
     isInOriginalSource: true,
     isInGeneratedSource: true,
     isOutermostInlinedScope: false,
@@ -46,6 +48,7 @@ const decodedScopes: SourcemapScope[] = [
     name: "g",
     start: { line: 1, column: 1 },
     end: { line: 2, column: 31 },
+    callsite: { sourceIndex: 0, line: 8, column: 1 },
     isInOriginalSource: true,
     isInGeneratedSource: false,
     isOutermostInlinedScope: true,
@@ -58,6 +61,7 @@ const decodedScopes: SourcemapScope[] = [
     name: "f",
     start: { line: 1, column: 1 },
     end: { line: 1, column: 28 },
+    callsite: { sourceIndex: 0, line: 5, column: 3 },
     isInOriginalSource: true,
     isInGeneratedSource: false,
     isOutermostInlinedScope: true,
@@ -90,9 +94,19 @@ test("original scopes at line 1", () => {
       bindings: []
     },
   ];
-  expect(getOriginalFrames({ line: 1, column: 1 }, decodedScopes, debuggerScopes)).toMatchInlineSnapshot(`
+  expect(getOriginalFrames(
+    { line: 1, column: 1 },
+    { sourceIndex: 0, line: 2, column: 3 },
+    decodedScopes,
+    debuggerScopes
+  )).toMatchInlineSnapshot(`
 [
   {
+    "location": {
+      "column": 3,
+      "line": 2,
+      "sourceIndex": 0,
+    },
     "name": "f",
     "scopes": [
       {
@@ -118,6 +132,11 @@ test("original scopes at line 1", () => {
     ],
   },
   {
+    "location": {
+      "column": 3,
+      "line": 5,
+      "sourceIndex": 0,
+    },
     "name": "g",
     "scopes": [
       {
@@ -143,6 +162,11 @@ test("original scopes at line 1", () => {
     ],
   },
   {
+    "location": {
+      "column": 1,
+      "line": 8,
+      "sourceIndex": 0,
+    },
     "name": null,
     "scopes": [
       {
@@ -190,9 +214,19 @@ test("original scopes at line 2", () => {
       bindings: []
     },
   ];
-  expect(getOriginalFrames({ line: 2, column: 1 }, decodedScopes, debuggerScopes)).toMatchInlineSnapshot(`
+  expect(getOriginalFrames(
+    { line: 2, column: 1 },
+    { sourceIndex: 0, line: 6, column: 3 },
+    decodedScopes,
+    debuggerScopes
+  )).toMatchInlineSnapshot(`
 [
   {
+    "location": {
+      "column": 3,
+      "line": 6,
+      "sourceIndex": 0,
+    },
     "name": "g",
     "scopes": [
       {
@@ -218,6 +252,11 @@ test("original scopes at line 2", () => {
     ],
   },
   {
+    "location": {
+      "column": 1,
+      "line": 8,
+      "sourceIndex": 0,
+    },
     "name": null,
     "scopes": [
       {

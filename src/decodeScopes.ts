@@ -1,5 +1,5 @@
 import { decode } from "vlq";
-import { ScopeType, SourcemapScope, SourcemapScopeBinding } from "./types";
+import { OriginalLocation, ScopeType, SourcemapScope, SourcemapScopeBinding } from "./types";
 
 export function decodeScopes(encodedScopes: string, scopeNames: string[]): SourcemapScope[] {
   return encodedScopes.split(",").map(encodedScope => decodeScope(encodedScope, scopeNames));
@@ -23,6 +23,14 @@ export function decodeScope(encodedScope: string, scopeNames: string[]): Sourcem
   const endLine = numbers.shift()!;
   const endColumn = numbers.shift()!;
 
+  let callsite: OriginalLocation | null = null;
+  if (isOutermostInlinedScope) {
+    const sourceIndex = numbers.shift()!;
+    const line = numbers.shift()!;
+    const column = numbers.shift()!;
+    callsite = { sourceIndex, line, column };
+  }
+
   const bindings: SourcemapScopeBinding[] = [];
   while (numbers.length > 0) {
     const varname = scopeNames[numbers.shift()!];
@@ -38,6 +46,7 @@ export function decodeScope(encodedScope: string, scopeNames: string[]): Sourcem
     isOutermostInlinedScope,
     start: { line: startLine, column: startColumn },
     end: { line: endLine, column: endColumn },
+    callsite,
     bindings,
   };
 }
