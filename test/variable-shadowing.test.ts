@@ -1,7 +1,7 @@
-import { decodeScopes } from "../src/decodeScopes";
-import { encodeScopes } from "../src/encodeScopes";
+import { decodeGeneratedScopes, decodeOriginalScopes } from "../src/decodeScopes";
+import { encodeGeneratedScopes, encodeOriginalScopes } from "../src/encodeScopes";
 import { getOriginalFrames } from "../src/getOriginalFrames";
-import { DebuggerScope, ScopeType, SourcemapScope } from "../src/types";
+import { DebuggerScope, GeneratedScope, OriginalScope } from "../src/types";
 
 /**
 Taken from https://github.com/tc39/source-map-rfc/issues/37#issuecomment-1699356967
@@ -33,60 +33,79 @@ Generated source:
 ```
 */
 
-const scopeNames = ["outer", "f", "inner", "g", "num", "a", "num_plus_one", "b", "value", "value_plus_one"];
-const scopes = "mBCCSKAC,WACCQEEGIKMO,WEEGKIQKSO";
-const decodedScopes: SourcemapScope[] = [
+const scopeNames = ["outer", "inner", "num", "num_plus_one", "value", "value_plus_one", "f", "g", "a", "b"];
+const encodedOriginalScopes = ["CCCAA,ACECACEG,CGECCIK,GI,GE,CU"];
+const encodedGeneratedScopes = ";CCCAAM,AECACOQS;GECACQS;;;I;;;E;M";
+const originalScopes: OriginalScope[] = [
   {
-    type: ScopeType.OTHER,
-    name: null,
-    start: { line: 1, column: 1 },
-    end: { line: 9, column: 5 },
-    callsite: null,
-    isInOriginalSource: true,
-    isInGeneratedSource: true,
-    isOutermostInlinedScope: false,
-    bindings: [
-      { varname: "outer", expression: "f" },
-    ]
-  },
-  {
-    type: ScopeType.NAMED_FUNCTION,
-    name: "outer",
-    start: { line: 1, column: 1 },
-    end: { line: 8, column: 2 },
-    callsite: null,
-    isInOriginalSource: true,
-    isInGeneratedSource: true,
-    isOutermostInlinedScope: false,
-    bindings: [
-      { varname: "inner", expression: "g" },
-      { varname: "num", expression: "a" },
-      { varname: "num_plus_one", expression: "b" },
-    ]
-  },
-  {
-    type: ScopeType.NAMED_FUNCTION,
-    name: "inner",
-    start: { line: 2, column: 3 },
-    end: { line: 5, column: 4 },
-    callsite: null,
-    isInOriginalSource: true,
-    isInGeneratedSource: true,
-    isOutermostInlinedScope: false,
-    bindings: [
-      { varname: "value", expression: "a" },
-      { varname: "value_plus_one", expression: "b" },
-    ]
-  },
+    start: { sourceIndex: 0, line: 1, column: 1 },
+    end: { sourceIndex: 0, line: 9, column: 10 },
+    kind: "module",
+    variables: ["outer"],
+    children: [
+      {
+        start: { sourceIndex: 0, line: 1, column: 1 },
+        end: { sourceIndex: 0, line: 8, column: 2 },
+        kind: "function",
+        name: "outer",
+        variables: ["inner", "num", "num_plus_one"],
+        children: [
+          {
+            start: { sourceIndex: 0, line: 2, column: 3 },
+            end: { sourceIndex: 0, line: 5, column: 4 },
+            kind: "function",
+            name: "inner",
+            variables: ["value", "value_plus_one"],
+          }
+        ],
+      }
+    ],
+  }
 ];
 
+const generatedScopes: GeneratedScope = {
+  start: { line: 1, column: 1 },
+  end: { line: 9, column: 6 },
+  kind: "module",
+  original: {
+    scope: originalScopes[0],
+    values: ["f"],
+  },
+  children: [
+    {
+      start: { line: 1, column: 1 },
+      end: { line: 8, column: 2 },
+      original: {
+        scope: originalScopes[0].children![0],
+        values: ["g", "a", "b"],
+      },
+      kind: "function",
+      children: [
+        {
+          start: { line: 2, column: 3 },
+          end: { line: 5, column: 4 },
+          kind: "function",
+          original: {
+            scope: originalScopes[0].children![0].children![0],
+            values: ["a", "b"],
+          },
+        }
+      ],
+    }
+  ],
+};
+
 test("decode scopes from sourcemap", () => {
-  expect(decodeScopes(scopes, scopeNames)).toStrictEqual(decodedScopes);
+  expect(decodeOriginalScopes(encodedOriginalScopes, scopeNames)).toStrictEqual(originalScopes);
+  expect(decodeGeneratedScopes(encodedGeneratedScopes, scopeNames, originalScopes)).toStrictEqual(generatedScopes);
 });
 
 test("encode scopes to sourcemap", () => {
-  const { scopes: encodedScopes, names } = encodeScopes(decodedScopes);
-  expect(encodedScopes).toBe(scopes);
+  const names: string[] = [];
+  const encodedOriginal = originalScopes.map(scope => encodeOriginalScopes(scope, names));
+  const encodedGenerated = encodeGeneratedScopes(generatedScopes, originalScopes, names);
+  expect(encodedOriginal).toStrictEqual(encodedOriginalScopes);
+  expect(encodedGenerated).toStrictEqual(encodedGeneratedScopes);
   expect(names).toStrictEqual(scopeNames);
 });
 
@@ -121,11 +140,12 @@ test("original frames at line 4", () => {
     },
   ];
   expect(getOriginalFrames(
-  { line: 4, column: 5 },
-  { sourceIndex: 0, line: 4, column: 5 },
-  decodedScopes,
-  debuggerScopes
-)).toMatchInlineSnapshot(`
+    { line: 4, column: 5 },
+    { sourceIndex: 0, line: 4, column: 5 },
+    generatedScopes,
+    originalScopes,
+    debuggerScopes
+  )).toMatchInlineSnapshot(`
 [
   {
     "location": {

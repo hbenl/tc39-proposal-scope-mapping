@@ -1,9 +1,13 @@
-import { Location, LocationRange } from "./types";
+import { GeneratedScope, Location, LocationRange, OriginalScope, ScopeKind } from "./types";
 
 export function assert(condition: any): asserts condition {
   if (!condition) {
     throw new Error("Assertion failed");
   }
+}
+
+export function findLastIndex<T>(array: T[], predicate: (value: T) => boolean): number {
+  return (array.length - 1) - [...array].reverse().findIndex(predicate);
 }
 
 export function isBefore(loc1: Location, loc2: Location) {
@@ -32,4 +36,21 @@ export function compareLocations(loc1: Location, loc2: Location) {
   } else {
     return 0;
   }
+}
+
+export const scopeKinds: ScopeKind[] = ["module", "function", "class", "block", "reference"];
+
+export interface ScopeItem<T extends OriginalScope | GeneratedScope> {
+  kind: "start" | "end";
+  scope: T;
+}
+
+export function getScopeItems<T extends OriginalScope | GeneratedScope>(scope: T): ScopeItem<T>[] {
+  const children = (scope.children as T[] | undefined) ?? [];
+  const childItems = children.flatMap(getScopeItems);
+  return [
+    { kind: "start", scope },
+    ...childItems,
+    { kind: "end", scope },
+  ]
 }

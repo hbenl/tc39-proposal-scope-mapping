@@ -1,8 +1,7 @@
-import { decodeScopes } from "../src/decodeScopes";
-import { encodeScopes } from "../src/encodeScopes";
+import { decodeGeneratedScopes, decodeOriginalScopes } from "../src/decodeScopes";
+import { encodeGeneratedScopes, encodeOriginalScopes } from "../src/encodeScopes";
 import { getOriginalFrames } from "../src/getOriginalFrames";
-import { DebuggerScope, Location, OriginalLocation, ScopeType, SourcemapScope } from "../src/types";
-import { assert } from "../src/util";
+import { DebuggerScope, GeneratedScope, OriginalScope } from "../src/types";
 
 /**
 Original source:
@@ -27,57 +26,78 @@ Generated source:
 */
 
 const scopeNames = ["f", "g", "x", '"amet"', '"ipsum"'];
-const scopes = "mBCCG4CADCD,cCCCE+BAQCEG,cACCC4BAKGEI";
-const decodedScopes: SourcemapScope[] = [
+const encodedOriginalScopes = ["CCCAAC,ACECAE,EE,CCECCE,GE,E4C"];
+const encodedGeneratedScopes = ";CCCAADD,AKGAEAQCG,AKGADAHGI,2B;+B;4C";
+const originalScopes: OriginalScope[] = [
   {
-    type: ScopeType.OTHER,
-    name: null,
-    start: { line: 1, column: 1 },
-    end: { line: 3, column: 44 },
-    callsite: null,
-    isInOriginalSource: true,
-    isInGeneratedSource: true,
-    isOutermostInlinedScope: false,
-    bindings: [
-      { varname: "f", expression: null },
-      { varname: "g", expression: null },
-    ]
-  },
-  {
-    type: ScopeType.NAMED_FUNCTION,
-    name: "g",
-    start: { line: 1, column: 1 },
-    end: { line: 2, column: 31 },
-    callsite: { sourceIndex: 0, line: 8, column: 1 },
-    isInOriginalSource: true,
-    isInGeneratedSource: false,
-    isOutermostInlinedScope: true,
-    bindings: [
-      { varname: "x", expression: '"amet"' }
-    ]
-  },
-  {
-    type: ScopeType.NAMED_FUNCTION,
-    name: "f",
-    start: { line: 1, column: 1 },
-    end: { line: 1, column: 28 },
-    callsite: { sourceIndex: 0, line: 5, column: 3 },
-    isInOriginalSource: true,
-    isInGeneratedSource: false,
-    isOutermostInlinedScope: true,
-    bindings: [
-      { varname: "x", expression: '"ipsum"' }
-    ]
-  },
+    start: { sourceIndex: 0, line: 1, column: 1 },
+    end: { sourceIndex: 0, line: 9, column: 44 },
+    kind: "module",
+    variables: ["f", "g"],
+    children: [
+      {
+        start: { sourceIndex: 0, line: 1, column: 1 },
+        end: { sourceIndex: 0, line: 3, column: 2 },
+        kind: "function",
+        name: "f",
+        variables: ["x"],
+      },
+      {
+        start: { sourceIndex: 0, line: 4, column: 1 },
+        end: { sourceIndex: 0, line: 7, column: 2 },
+        kind: "function",
+        name: "g",
+        variables: ["x"],
+      }
+    ],
+  }
 ];
 
+const generatedScopes: GeneratedScope = {
+  start: { line: 1, column: 1 },
+  end: { line: 3, column: 44 },
+  kind: "module",
+  original: {
+    scope: originalScopes[0],
+    values: [undefined, undefined],
+  },
+  children: [
+    {
+      start: { line: 1, column: 1 },
+      end: { line: 2, column: 31 },
+      kind: "reference",
+      original: {
+        callsite: { sourceIndex: 0, line: 8, column: 1 },
+        scope: originalScopes[0].children![1],
+        values: ['"amet"'],
+      },
+      children: [
+        {
+          start: { line: 1, column: 1 },
+          end: { line: 1, column: 28 },
+          kind: "reference",
+          original: {
+            callsite: { sourceIndex: 0, line: 5, column: 3 },
+            scope: originalScopes[0].children![0],
+            values: ['"ipsum"'],
+          },
+        }
+      ],
+    }
+  ],
+};
+
 test("decode scopes from sourcemap", () => {
-  expect(decodeScopes(scopes, scopeNames)).toStrictEqual(decodedScopes);
+  expect(decodeOriginalScopes(encodedOriginalScopes, scopeNames)).toStrictEqual(originalScopes);
+  expect(decodeGeneratedScopes(encodedGeneratedScopes, scopeNames, originalScopes)).toStrictEqual(generatedScopes);
 });
 
 test("encode scopes to sourcemap", () => {
-  const { scopes: encodedScopes, names } = encodeScopes(decodedScopes);
-  expect(encodedScopes).toBe(scopes);
+  const names: string[] = [];
+  const encodedOriginal = originalScopes.map(scope => encodeOriginalScopes(scope, names));
+  const encodedGenerated = encodeGeneratedScopes(generatedScopes, originalScopes, names);
+  expect(encodedOriginal).toStrictEqual(encodedOriginalScopes);
+  expect(encodedGenerated).toStrictEqual(encodedGeneratedScopes);
   expect(names).toStrictEqual(scopeNames);
 });
 
@@ -97,7 +117,8 @@ test("original scopes at line 1", () => {
   expect(getOriginalFrames(
     { line: 1, column: 1 },
     { sourceIndex: 0, line: 2, column: 3 },
-    decodedScopes,
+    generatedScopes,
+    originalScopes,
     debuggerScopes
   )).toMatchInlineSnapshot(`
 [
@@ -116,6 +137,22 @@ test("original scopes at line 1", () => {
               "objectId": 1,
             },
             "varname": "document",
+          },
+        ],
+      },
+      {
+        "bindings": [
+          {
+            "value": {
+              "unavailable": true,
+            },
+            "varname": "f",
+          },
+          {
+            "value": {
+              "unavailable": true,
+            },
+            "varname": "g",
           },
         ],
       },
@@ -153,6 +190,22 @@ test("original scopes at line 1", () => {
         "bindings": [
           {
             "value": {
+              "unavailable": true,
+            },
+            "varname": "f",
+          },
+          {
+            "value": {
+              "unavailable": true,
+            },
+            "varname": "g",
+          },
+        ],
+      },
+      {
+        "bindings": [
+          {
+            "value": {
               "value": "amet",
             },
             "varname": "x",
@@ -167,7 +220,7 @@ test("original scopes at line 1", () => {
       "line": 8,
       "sourceIndex": 0,
     },
-    "name": null,
+    "name": undefined,
     "scopes": [
       {
         "bindings": [
@@ -217,7 +270,8 @@ test("original scopes at line 2", () => {
   expect(getOriginalFrames(
     { line: 2, column: 1 },
     { sourceIndex: 0, line: 6, column: 3 },
-    decodedScopes,
+    generatedScopes,
+    originalScopes,
     debuggerScopes
   )).toMatchInlineSnapshot(`
 [
@@ -243,6 +297,22 @@ test("original scopes at line 2", () => {
         "bindings": [
           {
             "value": {
+              "unavailable": true,
+            },
+            "varname": "f",
+          },
+          {
+            "value": {
+              "unavailable": true,
+            },
+            "varname": "g",
+          },
+        ],
+      },
+      {
+        "bindings": [
+          {
+            "value": {
               "value": "amet",
             },
             "varname": "x",
@@ -257,7 +327,7 @@ test("original scopes at line 2", () => {
       "line": 8,
       "sourceIndex": 0,
     },
-    "name": null,
+    "name": undefined,
     "scopes": [
       {
         "bindings": [

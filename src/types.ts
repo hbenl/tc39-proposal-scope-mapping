@@ -12,29 +12,32 @@ export interface OriginalLocation extends Location {
   sourceIndex: number;
 }
 
-export interface SourcemapScopeBinding {
-  varname: string;
-  expression: string | null;
-}
+// use "reference" for scopes that only reference an original scope but
+// don't correspond to a scope in the generated code
+export type ScopeKind = "module" | "class" | "function" | "block" | "reference";
 
-export enum ScopeType {
-  ANONYMOUS_FUNCTION = 0,
-  NAMED_FUNCTION = 1,
-  OTHER = 2,
-}
-
-export interface SourcemapScope {
-  type: ScopeType;
-  isInGeneratedSource: boolean;
-  isInOriginalSource: boolean;
-  isOutermostInlinedScope: boolean;
-  // this needs to be set if type is NAMED_FUNCTION
-  name: string | null;
+//TODO "live ranges" for values
+export interface GeneratedScope {
   start: Location;
   end: Location;
-  // this needs to be set if isOutermostInlinedScope is true
-  callsite: OriginalLocation | null;
-  bindings: SourcemapScopeBinding[];
+  kind: ScopeKind;
+  original?: {
+    // this needs to be set for inlined functions
+    callsite?: OriginalLocation;
+    scope: OriginalScope;
+    // this needs to have the same length as the referenced scope's variables
+    values: (string | undefined)[];
+  };
+  children?: GeneratedScope[];
+}
+
+export interface OriginalScope {
+  start: OriginalLocation;
+  end: OriginalLocation;
+  kind: Exclude<ScopeKind, "reference">;
+  name?: string;
+  variables: string[];
+  children?: OriginalScope[];
 }
 
 export interface PrimitiveDebuggerValue {
@@ -61,7 +64,7 @@ export interface DebuggerScope {
 }
 
 export interface DebuggerFrame {
-  name: string | null;
+  name?: string;
   location: OriginalLocation;
   scopes: DebuggerScope[];
 }
