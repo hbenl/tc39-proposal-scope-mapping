@@ -88,7 +88,23 @@ function getCorrespondingDebuggerScopeIndex(
   return generatedScopeChain.slice(0, generatedScopeIndex + 1).filter(scope => scope.kind !== "reference").length;
 }
 
+const numberRegex = /^\s*[+-]?(\d+|\d*\.\d+|\d+\.\d*)([Ee][+-]?\d+)?\s*$/;
 function lookupScopeValue(expression: string, scopes: DebuggerScope[]): DebuggerValue {
+  if (expression === "undefined") {
+    return { value: undefined };
+  }
+  if (expression === "null") {
+    return { value: null };
+  }
+  if (expression === "true") {
+    return { value: true };
+  }
+  if (expression === "false") {
+    return { value: false };
+  }
+  if (numberRegex.test(expression)) {
+    return { value: +expression };
+  }
   if (expression.startsWith('"') && expression.endsWith('"')) {
     return { value: expression.slice(1, -1) };
   }
