@@ -43,14 +43,12 @@ export function encodeGeneratedScopes(generatedScope: GeneratedScope, originalSc
   let currentCallsiteColumn = 0;
   let encodedScopes = "";
 
-  function addSeparatorAndRelativeColumn(location: Location, isFirstItem: boolean) {
+  function addSeparatorAndRelativeColumn(location: Location) {
     if (location.line > currentLine) {
       encodedScopes += ";".repeat(location.line - currentLine);
       encodedScopes += encode(location.column);
     } else {
-      if (!isFirstItem) {
-        encodedScopes += ",";
-      }
+      encodedScopes += ",";
       encodedScopes += encode(location.column - currentColumn);
     }
     currentLine = location.line;
@@ -62,7 +60,7 @@ export function encodeGeneratedScopes(generatedScope: GeneratedScope, originalSc
     const item = items[i];
 
     if (item.kind === "start") {
-      addSeparatorAndRelativeColumn(item.scope.start, i === 0);
+      addSeparatorAndRelativeColumn(item.scope.start);
 
       encodedScopes += encode(scopeKinds.indexOf(item.scope.kind) + 1);
       encodedScopes += encode((item.scope.original ? 1 : 0) + (item.scope.original?.callsite ? 2 : 0));
@@ -89,7 +87,7 @@ export function encodeGeneratedScopes(generatedScope: GeneratedScope, originalSc
         }
       }
     } else {
-      addSeparatorAndRelativeColumn(item.scope.end, false);
+      addSeparatorAndRelativeColumn(item.scope.end);
     }
   }
 
