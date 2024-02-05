@@ -59,7 +59,7 @@ const generatedScopes: GeneratedScope = {
   kind: "module",
   original: {
     scope: originalScopes[0],
-    values: [undefined, undefined],
+    values: [[undefined], [undefined]],
   },
   children: [
     {
@@ -69,7 +69,7 @@ const generatedScopes: GeneratedScope = {
       original: {
         callsite: { sourceIndex: 0, line: 8, column: 1 },
         scope: originalScopes[0].children![1],
-        values: ['"amet"'],
+        values: [['"amet"']],
       },
       children: [
         {
@@ -79,7 +79,7 @@ const generatedScopes: GeneratedScope = {
           original: {
             callsite: { sourceIndex: 0, line: 5, column: 3 },
             scope: originalScopes[0].children![0],
-            values: ['"ipsum"'],
+            values: [['"ipsum"']],
           },
         }
       ],

@@ -74,7 +74,7 @@ const generatedScopes: GeneratedScope = {
       kind: "block",
       original: {
         scope: originalScopes[0].children![0],
-        values: ["x1"],
+        values: [["x1"]],
       },
       children: [
         {
@@ -83,7 +83,7 @@ const generatedScopes: GeneratedScope = {
           kind: "reference",
           original: {
             scope: originalScopes[0].children![0].children![0],
-            values: ["x2"],
+            values: [["x2"]],
           },
         }
       ],

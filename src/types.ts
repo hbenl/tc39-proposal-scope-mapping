@@ -16,7 +16,8 @@ export interface OriginalLocation extends Location {
 // don't correspond to a scope in the generated code
 export type ScopeKind = "module" | "class" | "function" | "block" | "reference";
 
-//TODO "live ranges" for values
+export type MultiValue = [string | undefined, ...([Location, string | undefined][])];
+
 export interface GeneratedScope {
   start: Location;
   end: Location;
@@ -26,7 +27,7 @@ export interface GeneratedScope {
     callsite?: OriginalLocation;
     scope: OriginalScope;
     // this needs to have the same length as the referenced scope's variables
-    values: (string | undefined)[];
+    values: MultiValue[];
   };
   children?: GeneratedScope[];
 }

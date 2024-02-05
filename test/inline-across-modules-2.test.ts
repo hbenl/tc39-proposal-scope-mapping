@@ -89,7 +89,7 @@ const generatedScopes: GeneratedScope = {
   kind: "module",
   original: {
     scope: originalScopes[1],
-    values: [undefined, undefined, undefined],
+    values: [[undefined], [undefined], [undefined]],
   },
   children: [
     {
@@ -98,7 +98,7 @@ const generatedScopes: GeneratedScope = {
       kind: "reference",
       original: {
         scope: originalScopes[0],
-        values: ["\"module_constant\"", undefined],
+        values: [["\"module_constant\""], [undefined]],
       },
       children: [
         {
@@ -107,7 +107,7 @@ const generatedScopes: GeneratedScope = {
           kind: "reference",
           original: {
             scope: originalScopes[1].children![1],
-            values: ["42"],
+            values: [["42"]],
             callsite: { sourceIndex: 1, line: 11, column: 1 },
           },
           children: [
@@ -117,7 +117,7 @@ const generatedScopes: GeneratedScope = {
               kind: "reference",
               original: {
                 scope: originalScopes[1].children![0],
-                values: ["42"],
+                values: [["42"]],
                 callsite: { sourceIndex: 1, line: 8, column: 3 },
               },
               children: [
@@ -127,7 +127,7 @@ const generatedScopes: GeneratedScope = {
                   kind: "reference",
                   original: {
                     scope: originalScopes[0].children![0],
-                    values: ["42"],
+                    values: [["42"]],
                     callsite: { sourceIndex: 1, line: 4, column: 3 },
                   },
                 }
@@ -143,7 +143,7 @@ const generatedScopes: GeneratedScope = {
       kind: "reference",
       original: {
         scope: originalScopes[0],
-        values: ["\"module_constant\"", undefined],
+        values: [["\"module_constant\""], [undefined]],
       },
       children: [
         {
@@ -152,7 +152,7 @@ const generatedScopes: GeneratedScope = {
           kind: "reference",
           original: {
             scope: originalScopes[1].children![1],
-            values: ["null"],
+            values: [["null"]],
             callsite: { sourceIndex: 1, line: 12, column: 1 },
           },
           children: [
@@ -162,7 +162,7 @@ const generatedScopes: GeneratedScope = {
               kind: "reference",
               original: {
                 scope: originalScopes[1].children![0],
-                values: ["null"],
+                values: [["null"]],
                 callsite: { sourceIndex: 1, line: 8, column: 3 },
               },
               children: [
@@ -172,7 +172,7 @@ const generatedScopes: GeneratedScope = {
                   kind: "reference",
                   original: {
                     scope: originalScopes[0].children![0],
-                    values: ["null"],
+                    values: [["null"]],
                     callsite: { sourceIndex: 1, line: 4, column: 3 },
                   },
                 }

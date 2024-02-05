@@ -67,7 +67,7 @@ const generatedScopes: GeneratedScope = {
   kind: "module",
   original: {
     scope: originalScopes[0],
-    values: [undefined, "o"],
+    values: [[undefined], ["o"]],
   },
   children: [
     {
@@ -76,7 +76,7 @@ const generatedScopes: GeneratedScope = {
       kind: "reference",
       original: {
         scope: originalScopes[1],
-        values: ["l", undefined],
+        values: [["l"], [undefined]],
       },
       children: [
         {
@@ -86,7 +86,7 @@ const generatedScopes: GeneratedScope = {
           original: {
             callsite: { sourceIndex: 0, line: 3, column: 1 },
             scope: originalScopes[1].children![0],
-            values: ["e"],
+            values: [["e"]],
           },
         }
       ]

@@ -11,12 +11,12 @@ export function getOriginalFrames(
 
   const generatedScopeChain = getGeneratedScopeChain(location, generatedScopes);
 
-  const originalFrames: DebuggerFrame[] = [getOriginalFrame(originalLocation, generatedScopeChain, originalScopes, debuggerScopeChain)];
+  const originalFrames: DebuggerFrame[] = [getOriginalFrame(location, originalLocation, generatedScopeChain, originalScopes, debuggerScopeChain)];
 
   for (let i = generatedScopeChain.length - 1; i >= 0; i--) {
     const callsite = generatedScopeChain[i].original?.callsite;
     if (callsite) {
-      originalFrames.push(getOriginalFrame(callsite, generatedScopeChain.slice(0, i + 1), originalScopes, debuggerScopeChain));
+      originalFrames.push(getOriginalFrame(location, callsite, generatedScopeChain.slice(0, i + 1), originalScopes, debuggerScopeChain));
     }
   }
 
@@ -24,6 +24,7 @@ export function getOriginalFrames(
 }
 
 function getOriginalFrame(
+  generatedLocation: Location,
   originalLocation: OriginalLocation,
   generatedScopeChain: GeneratedScope[],
   originalScopes: OriginalScope[],
@@ -43,7 +44,14 @@ function getOriginalFrame(
     assert(originalScope.variables.length === generatedScope.original.values.length);
     for (let j = 0; j < originalScope.variables.length; j++) {
       const varname = originalScope.variables[j];
-      const expression = generatedScope.original.values[j];
+      const expressions = generatedScope.original.values[j];
+      let expression: string | undefined = expressions[0];
+      for (const [loc, expr] of expressions.slice(1) as [Location, string | undefined][]) {
+        if (loc.line > generatedLocation.line || (loc.line === generatedLocation.line && loc.column > generatedLocation.column)) {
+          break;
+        }
+        expression = expr;
+      }
       // We use `lookupScopeValue()`, which only works if `expression` is the name of a
       // generated variable or a string expression; to support arbitrary expressions we'd need to use `evaluateWithScopes()`
       const value = expression !== undefined ? lookupScopeValue(expression, debuggerScopeChainForLookup) : { unavailable: true } as UnavailableValue;

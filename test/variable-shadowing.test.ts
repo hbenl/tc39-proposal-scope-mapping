@@ -69,7 +69,7 @@ const generatedScopes: GeneratedScope = {
   kind: "module",
   original: {
     scope: originalScopes[0],
-    values: ["f"],
+    values: [["f"]],
   },
   children: [
     {
@@ -77,7 +77,7 @@ const generatedScopes: GeneratedScope = {
       end: { line: 8, column: 2 },
       original: {
         scope: originalScopes[0].children![0],
-        values: ["g", "a", "b"],
+        values: [["g"], ["a"], ["b"]],
       },
       kind: "function",
       children: [
@@ -87,7 +87,7 @@ const generatedScopes: GeneratedScope = {
           kind: "function",
           original: {
             scope: originalScopes[0].children![0].children![0],
-            values: ["a", "b"],
+            values: [["a"], ["b"]],
           },
         }
       ],

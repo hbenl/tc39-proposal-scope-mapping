@@ -83,7 +83,29 @@ export function encodeGeneratedScopes(generatedScope: GeneratedScope, originalSc
         }
 
         for (const value of item.scope.original.values) {
-          encodedScopes += encode(value ? getNameIndex(value, names) : -1);
+          assert(value.length > 0);
+          if (value.length === 1) {
+            encodedScopes += encode(value[0] ? getNameIndex(value[0], names) : -1);
+          } else {
+            encodedScopes += encode(-value.length);
+            encodedScopes += encode(value[0] ? getNameIndex(value[0], names) : -1);
+            let currentLine = item.scope.start.line;
+            let currentColumn = item.scope.start.column;
+            for (const [loc, val] of value.slice(1) as [Location, string | undefined][]) {
+              if (loc.line === currentLine) {
+                assert(loc.column > currentColumn);
+                encodedScopes += encode(0);
+                encodedScopes += encode(loc.column - currentColumn);
+              } else {
+                assert(loc.line > currentLine);
+                encodedScopes += encode(loc.line - currentLine);
+                encodedScopes += encode(loc.column);
+              }
+              currentLine = loc.line;
+              currentColumn = loc.column;
+              encodedScopes += encode(val ? getNameIndex(val, names) : -1);
+            }
+          }
         }
       }
     } else {

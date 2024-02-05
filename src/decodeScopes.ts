@@ -1,5 +1,5 @@
 import { decode } from "vlq";
-import { GeneratedScope, OriginalScope } from "./types";
+import { GeneratedScope, OriginalScope, MultiValue } from "./types";
 import { getScopeItems, scopeKinds } from "./util";
 import { assert } from "./util";
 
@@ -139,14 +139,26 @@ function _decodeGeneratedScopes(lineItems: LineItem[], names: string[], original
         callsite = { sourceIndex, line, column };
       }
 
-      const values: (string | undefined)[] = [];
+      const values: MultiValue[] = [];
       while (startItem.item.length > 0) {
-        const index = startItem.item.shift()!;
-        if (index >= 0) {
-          values.push(names[index]);
+        let indexOrLength = startItem.item.shift()!;
+        let value: MultiValue;
+        if (indexOrLength >= -1) {
+          value = [lookupName(names, indexOrLength)];
         } else {
-          values.push(undefined);
+          value = [lookupName(names, startItem.item.shift()!)];
+          let currentLine = state.currentLine;
+          let currentColumn = state.currentColumn;
+          while (indexOrLength < -1) {
+            const line = currentLine + startItem.item.shift()!;
+            const column = startItem.item.shift()! + (line === currentLine ? currentColumn : 0);
+            value.push([{ line, column }, lookupName(names, startItem.item.shift()!)]);
+            currentLine = line;
+            currentColumn = column;
+            indexOrLength++;
+          }
         }
+        values.push(value);
       }
 
       original = { scope, values };
@@ -190,4 +202,12 @@ function getGeneratedItemKind(item: number[]): "start" | "end" {
 function findOriginalScope(originalScopes: OriginalScope[], sourceIndex: number, scopeIndex: number): OriginalScope {
   const startItems = getScopeItems(originalScopes[sourceIndex]).filter(item => item.kind === "start");
   return startItems[scopeIndex].scope;
+}
+
+function lookupName(names: string[], index: number) {
+  if (index >= 0) {
+    return names[index];
+  } else {
+    return undefined;
+  }
 }
