@@ -7,7 +7,8 @@ export function assert(condition: any): asserts condition {
 }
 
 export function findLastIndex<T>(array: T[], predicate: (value: T) => boolean): number {
-  return (array.length - 1) - [...array].reverse().findIndex(predicate);
+  const reverseIndex = [...array].reverse().findIndex(predicate);
+  return reverseIndex >= 0 ? (array.length - 1) - reverseIndex : -1;
 }
 
 export function isBefore(loc1: Location, loc2: Location) {

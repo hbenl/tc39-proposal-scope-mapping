@@ -34,7 +34,9 @@ function getOriginalFrame(
   const originalScopeChain = getOriginalScopeChain(originalLocation, originalScopes[originalLocation.sourceIndex]);
   const originalDebuggerScopeChain: DebuggerScope[] = originalScopeChain.map(originalScope => {
     const generatedScopeIndex = findLastIndex(generatedScopeChain, generatedScope => generatedScope.original?.scope === originalScope);
-    assert(generatedScopeIndex >= 0);
+    if (generatedScopeIndex < 0) {
+      return { bindings: [] };
+    }
     const generatedScope = generatedScopeChain[generatedScopeIndex];
     assert(generatedScope.original);
     const debuggerScopeIndex = getCorrespondingDebuggerScopeIndex(generatedScopeChain, generatedScopeIndex);
