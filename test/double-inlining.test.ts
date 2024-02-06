@@ -6,45 +6,45 @@ import { DebuggerScope, GeneratedScope, OriginalScope } from "../src/types";
 /**
 Original source:
 ```javascript
-1 function f(x) {
-2   console.log("Lorem " + x);
-3 }
-4 function g(x) {
-5   f("ipsum");
-6   console.log("dolor sit " + x);
-7 }
-8 g("amet");
-9 console.log("consectetur adipiscing elit");
+0 function f(x) {
+1   console.log("Lorem " + x);
+2 }
+3 function g(x) {
+4   f("ipsum");
+5   console.log("dolor sit " + x);
+6 }
+7 g("amet");
+8 console.log("consectetur adipiscing elit");
 ```
 
 Generated source:
 ```javascript
-1 console.log("Lorem ipsum");
-2 console.log("dolor sit amet");
-3 console.log("consectetur adipiscing elit");
+0 console.log("Lorem ipsum");
+1 console.log("dolor sit amet");
+2 console.log("consectetur adipiscing elit");
 ```
 */
 
 const scopeNames = ["f", "g", "x", '"amet"', '"ipsum"'];
-const encodedOriginalScopes = ["CCCAAC,ACECAE,EE,CCECCE,GE,E4C"];
-const encodedGeneratedScopes = ";CCCAADD,AKGAEAQCG,AKGADAHGI,2B;+B;4C";
+const encodedOriginalScopes = ["AACAAC,AAECAE,EC,CAECCE,GC,E2C"];
+const encodedGeneratedScopes = ",ACCAADD,AKGAEAOAG,AKGADAHEI,2B;8B;2C";
 const originalScopes: OriginalScope[] = [
   {
-    start: { sourceIndex: 0, line: 1, column: 1 },
-    end: { sourceIndex: 0, line: 9, column: 44 },
+    start: { sourceIndex: 0, line: 0, column: 0 },
+    end: { sourceIndex: 0, line: 8, column: 43 },
     kind: "module",
     variables: ["f", "g"],
     children: [
       {
-        start: { sourceIndex: 0, line: 1, column: 1 },
-        end: { sourceIndex: 0, line: 3, column: 2 },
+        start: { sourceIndex: 0, line: 0, column: 0 },
+        end: { sourceIndex: 0, line: 2, column: 1 },
         kind: "function",
         name: "f",
         variables: ["x"],
       },
       {
-        start: { sourceIndex: 0, line: 4, column: 1 },
-        end: { sourceIndex: 0, line: 7, column: 2 },
+        start: { sourceIndex: 0, line: 3, column: 0 },
+        end: { sourceIndex: 0, line: 6, column: 1 },
         kind: "function",
         name: "g",
         variables: ["x"],
@@ -54,8 +54,8 @@ const originalScopes: OriginalScope[] = [
 ];
 
 const generatedScopes: GeneratedScope = {
-  start: { line: 1, column: 1 },
-  end: { line: 3, column: 44 },
+  start: { line: 0, column: 0 },
+  end: { line: 2, column: 43 },
   kind: "module",
   original: {
     scope: originalScopes[0],
@@ -63,21 +63,21 @@ const generatedScopes: GeneratedScope = {
   },
   children: [
     {
-      start: { line: 1, column: 1 },
-      end: { line: 2, column: 31 },
+      start: { line: 0, column: 0 },
+      end: { line: 1, column: 30 },
       kind: "reference",
       original: {
-        callsite: { sourceIndex: 0, line: 8, column: 1 },
+        callsite: { sourceIndex: 0, line: 7, column: 0 },
         scope: originalScopes[0].children![1],
         values: [['"amet"']],
       },
       children: [
         {
-          start: { line: 1, column: 1 },
-          end: { line: 1, column: 28 },
+          start: { line: 0, column: 0 },
+          end: { line: 0, column: 27 },
           kind: "reference",
           original: {
-            callsite: { sourceIndex: 0, line: 5, column: 3 },
+            callsite: { sourceIndex: 0, line: 4, column: 2 },
             scope: originalScopes[0].children![0],
             values: [['"ipsum"']],
           },
@@ -115,8 +115,8 @@ test("original scopes at line 1", () => {
     },
   ];
   expect(getOriginalFrames(
-    { line: 1, column: 1 },
-    { sourceIndex: 0, line: 2, column: 3 },
+    { line: 0, column: 0 },
+    { sourceIndex: 0, line: 1, column: 2 },
     generatedScopes,
     originalScopes,
     debuggerScopes
@@ -124,8 +124,8 @@ test("original scopes at line 1", () => {
 [
   {
     "location": {
-      "column": 3,
-      "line": 2,
+      "column": 2,
+      "line": 1,
       "sourceIndex": 0,
     },
     "name": "f",
@@ -170,8 +170,8 @@ test("original scopes at line 1", () => {
   },
   {
     "location": {
-      "column": 3,
-      "line": 5,
+      "column": 2,
+      "line": 4,
       "sourceIndex": 0,
     },
     "name": "g",
@@ -216,8 +216,8 @@ test("original scopes at line 1", () => {
   },
   {
     "location": {
-      "column": 1,
-      "line": 8,
+      "column": 0,
+      "line": 7,
       "sourceIndex": 0,
     },
     "name": undefined,
@@ -268,8 +268,8 @@ test("original scopes at line 2", () => {
     },
   ];
   expect(getOriginalFrames(
-    { line: 2, column: 1 },
-    { sourceIndex: 0, line: 6, column: 3 },
+    { line: 1, column: 0 },
+    { sourceIndex: 0, line: 5, column: 2 },
     generatedScopes,
     originalScopes,
     debuggerScopes
@@ -277,8 +277,8 @@ test("original scopes at line 2", () => {
 [
   {
     "location": {
-      "column": 3,
-      "line": 6,
+      "column": 2,
+      "line": 5,
       "sourceIndex": 0,
     },
     "name": "g",
@@ -323,8 +323,8 @@ test("original scopes at line 2", () => {
   },
   {
     "location": {
-      "column": 1,
-      "line": 8,
+      "column": 0,
+      "line": 7,
       "sourceIndex": 0,
     },
     "name": undefined,

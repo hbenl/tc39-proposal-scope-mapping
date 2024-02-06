@@ -8,48 +8,48 @@ Taken from https://github.com/tc39/source-map-rfc/issues/37#issuecomment-1699356
 
 Original source:
 ```javascript
-1 {
-2   let x = 1;
-3   console.log(x);
-4   {
-5     let x = 2;
-6     console.log(x);
-7   }
-8   console.log(x);
-9 }
+0 {
+1   let x = 1;
+2   console.log(x);
+3   {
+4     let x = 2;
+5     console.log(x);
+6   }
+7   console.log(x);
+8 }
 ```
 
 Generated source:
 ```javascript
-1 {
-2   var x1 = 1;
-3   console.log(x1);
-4   var x2 = 2;
-5   console.log(x2);
-6   console.log(x1);
-7 }
+0 {
+1   var x1 = 1;
+2   console.log(x1);
+3   var x2 = 2;
+4   console.log(x2);
+5   console.log(x1);
+6 }
 ```
 */
 
 const scopeNames = ["x", "x1", "x2"];
-const encodedOriginalScopes = ["CCCA,ACIAA,GGIAA,GI,EE,AE"];
-const encodedGeneratedScopes = ";CCCAA,AICACC;;;GKCACE;mB;;E,A";
+const encodedOriginalScopes = ["AACA,AAIAA,GEIAA,GG,EC,AC"];
+const encodedGeneratedScopes = ",ACCAA,AICACC;;;EKCACE;kB;;C,A";
 const originalScopes: OriginalScope[] = [
   {
-    start: { sourceIndex: 0, line: 1, column: 1 },
-    end: { sourceIndex: 0, line: 9, column: 2 },
+    start: { sourceIndex: 0, line: 0, column: 0 },
+    end: { sourceIndex: 0, line: 8, column: 1 },
     kind: "module",
     variables: [],
     children: [
       {
-        start: { sourceIndex: 0, line: 1, column: 1 },
-        end: { sourceIndex: 0, line: 9, column: 2 },
+        start: { sourceIndex: 0, line: 0, column: 0 },
+        end: { sourceIndex: 0, line: 8, column: 1 },
         variables: ["x"],
         kind: "block",
         children: [
           {
-            start: { sourceIndex: 0, line: 4, column: 3 },
-            end: { sourceIndex: 0, line: 7, column: 4 },
+            start: { sourceIndex: 0, line: 3, column: 2 },
+            end: { sourceIndex: 0, line: 6, column: 3 },
             kind: "block",
             variables: ["x"],
           }
@@ -60,8 +60,8 @@ const originalScopes: OriginalScope[] = [
 ];
 
 const generatedScopes: GeneratedScope = {
-  start: { line: 1, column: 1 },
-  end: { line: 7, column: 2 },
+  start: { line: 0, column: 0 },
+  end: { line: 6, column: 1 },
   kind: "module",
   original: {
     scope: originalScopes[0],
@@ -69,8 +69,8 @@ const generatedScopes: GeneratedScope = {
   },
   children: [
     {
-      start: { line: 1, column: 1 },
-      end: { line: 7, column: 2 },
+      start: { line: 0, column: 0 },
+      end: { line: 6, column: 1 },
       kind: "block",
       original: {
         scope: originalScopes[0].children![0],
@@ -78,8 +78,8 @@ const generatedScopes: GeneratedScope = {
       },
       children: [
         {
-          start: { line: 4, column: 3 },
-          end: { line: 5, column: 19 },
+          start: { line: 3, column: 2 },
+          end: { line: 4, column: 18 },
           kind: "reference",
           original: {
             scope: originalScopes[0].children![0].children![0],
@@ -126,8 +126,8 @@ test("original frames at line 5", () => {
     },
   ];
   expect(getOriginalFrames(
-    { line: 5, column: 3 },
-    { sourceIndex: 0, line: 6, column: 5 },
+    { line: 4, column: 2 },
+    { sourceIndex: 0, line: 5, column: 4 },
     generatedScopes,
     originalScopes,
     debuggerScopes
@@ -135,8 +135,8 @@ test("original frames at line 5", () => {
 [
   {
     "location": {
-      "column": 5,
-      "line": 6,
+      "column": 4,
+      "line": 5,
       "sourceIndex": 0,
     },
     "name": undefined,

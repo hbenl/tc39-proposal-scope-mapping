@@ -9,50 +9,50 @@ Taken from https://github.com/tc39/source-map-rfc/issues/61
 Original sources:
 - module.js:
 ```javascript
-export const MODULE_CONSTANT = 'module_constant';
-
-export class Logger {
-  static log(x) {
-    console.log(x);
-  }
-}
+0 export const MODULE_CONSTANT = 'module_constant';
+1
+2 export class Logger {
+3   static log(x) {
+4     console.log(x);
+5   }
+6 }
 ```
 
 - inline_across_modules.js:
 ```javascript
-import {Logger} from './module.js';
-
-function inner(x) {
-  Logger.log(x);
-}
-
-function outer(x) {
-  inner(x);
-}
-
-outer(42);
-outer(null);
+0  import {Logger} from './module.js';
+1
+2  function inner(x) {
+3    Logger.log(x);
+4  }
+5
+6  function outer(x) {
+7    inner(x);
+8  }
+9
+10 outer(42);
+11 outer(null);
 ```
 
 - Generated source:
 ```javascript
-console.log(42);console.log(null);
+0 console.log(42);console.log(null);
 ```
 */
 
 const scopeNames = ["MODULE_CONSTANT", "Logger", "log", "x", "inner", "outer", "\"module_constant\"", "42", "null"];
-const encodedOriginalScopes = ["CCCAAC,GiBECEG,EI,CE", "CCCACIK,EmBECIG,EE,EmBECKG,EE,Ga"];
-const encodedGeneratedScopes = ";CCCCADDD,AKCDAMD,AKGCECWCO,AKGADAHGO,AKGDCAJGO,gB,A,A,A,AKCADMD,AKGCEAQCQ,AKGADAJGQ,AKGDCAJGQ,kB,A,A,A,A";
+const encodedOriginalScopes = ["AACAAC,GgBECEG,EG,CC", "AACACIK,EkBECIG,EC,EkBECKG,EC,GY"];
+const encodedGeneratedScopes = ",ACCCADDD,AKCDAMD,AKGCECUAO,AKGADAHEO,AKGDCAJEO,gB,A,A,A,AKCADMD,AKGCEAQAQ,AKGADAJEQ,AKGDCAJEQ,kB,A,A,A,A";
 const originalScopes: OriginalScope[] = [
   {
-    start: { sourceIndex: 0, line: 1, column: 1 },
-    end: { sourceIndex: 0, line: 7, column: 2 },
+    start: { sourceIndex: 0, line: 0, column: 0 },
+    end: { sourceIndex: 0, line: 6, column: 1 },
     kind: "module",
     variables: ["MODULE_CONSTANT", "Logger"],
     children: [
       {
-        start: { sourceIndex: 0, line: 4, column: 17 },
-        end: { sourceIndex: 0, line: 6, column: 4 },
+        start: { sourceIndex: 0, line: 3, column: 16 },
+        end: { sourceIndex: 0, line: 5, column: 3 },
         kind: "function",
         name: "log",
         variables: ["x"],
@@ -60,21 +60,21 @@ const originalScopes: OriginalScope[] = [
     ]
   },
   {
-    start: { sourceIndex: 1, line: 1, column: 1 },
-    end: { sourceIndex: 1, line: 12, column: 13 },
+    start: { sourceIndex: 1, line: 0, column: 0 },
+    end: { sourceIndex: 1, line: 11, column: 12 },
     kind: "module",
     variables: ["Logger", "inner", "outer"],
     children: [
       {
-        start: { sourceIndex: 1, line: 3, column: 19 },
-        end: { sourceIndex: 1, line: 5, column: 2 },
+        start: { sourceIndex: 1, line: 2, column: 18 },
+        end: { sourceIndex: 1, line: 4, column: 1 },
         kind: "function",
         name: "inner",
         variables: ["x"],
       },
       {
-        start: { sourceIndex: 1, line: 7, column: 19 },
-        end: { sourceIndex: 1, line: 9, column: 2 },
+        start: { sourceIndex: 1, line: 6, column: 18 },
+        end: { sourceIndex: 1, line: 8, column: 1 },
         kind: "function",
         name: "outer",
         variables: ["x"],
@@ -84,8 +84,8 @@ const originalScopes: OriginalScope[] = [
 ];
 
 const generatedScopes: GeneratedScope = {
-  start: { line: 1, column: 1 },
-  end: { line: 1, column: 35 },
+  start: { line: 0, column: 0 },
+  end: { line: 0, column: 34 },
   kind: "module",
   original: {
     scope: originalScopes[1],
@@ -93,8 +93,8 @@ const generatedScopes: GeneratedScope = {
   },
   children: [
     {
-      start: { line: 1, column: 1 },
-      end: { line: 1, column: 17 },
+      start: { line: 0, column: 0 },
+      end: { line: 0, column: 16 },
       kind: "reference",
       original: {
         scope: originalScopes[0],
@@ -102,33 +102,33 @@ const generatedScopes: GeneratedScope = {
       },
       children: [
         {
-          start: { line: 1, column: 1 },
-          end: { line: 1, column: 17 },
+          start: { line: 0, column: 0 },
+          end: { line: 0, column: 16 },
           kind: "reference",
           original: {
             scope: originalScopes[1].children![1],
             values: [["42"]],
-            callsite: { sourceIndex: 1, line: 11, column: 1 },
+            callsite: { sourceIndex: 1, line: 10, column: 0 },
           },
           children: [
             {
-              start: { line: 1, column: 1 },
-              end: { line: 1, column: 17 },
+              start: { line: 0, column: 0 },
+              end: { line: 0, column: 16 },
               kind: "reference",
               original: {
                 scope: originalScopes[1].children![0],
                 values: [["42"]],
-                callsite: { sourceIndex: 1, line: 8, column: 3 },
+                callsite: { sourceIndex: 1, line: 7, column: 2 },
               },
               children: [
                 {
-                  start: { line: 1, column: 1 },
-                  end: { line: 1, column: 17 },
+                  start: { line: 0, column: 0 },
+                  end: { line: 0, column: 16 },
                   kind: "reference",
                   original: {
                     scope: originalScopes[0].children![0],
                     values: [["42"]],
-                    callsite: { sourceIndex: 1, line: 4, column: 3 },
+                    callsite: { sourceIndex: 1, line: 3, column: 2 },
                   },
                 }
               ],
@@ -138,8 +138,8 @@ const generatedScopes: GeneratedScope = {
       ],
     },
     {
-      start: { line: 1, column: 17 },
-      end: { line: 1, column: 35 },
+      start: { line: 0, column: 16 },
+      end: { line: 0, column: 34 },
       kind: "reference",
       original: {
         scope: originalScopes[0],
@@ -147,33 +147,33 @@ const generatedScopes: GeneratedScope = {
       },
       children: [
         {
-          start: { line: 1, column: 17 },
-          end: { line: 1, column: 35 },
+          start: { line: 0, column: 16 },
+          end: { line: 0, column: 34 },
           kind: "reference",
           original: {
             scope: originalScopes[1].children![1],
             values: [["null"]],
-            callsite: { sourceIndex: 1, line: 12, column: 1 },
+            callsite: { sourceIndex: 1, line: 11, column: 0 },
           },
           children: [
             {
-              start: { line: 1, column: 17 },
-              end: { line: 1, column: 35 },
+              start: { line: 0, column: 16 },
+              end: { line: 0, column: 34 },
               kind: "reference",
               original: {
                 scope: originalScopes[1].children![0],
                 values: [["null"]],
-                callsite: { sourceIndex: 1, line: 8, column: 3 },
+                callsite: { sourceIndex: 1, line: 7, column: 2 },
               },
               children: [
                 {
-                  start: { line: 1, column: 17 },
-                  end: { line: 1, column: 35 },
+                  start: { line: 0, column: 16 },
+                  end: { line: 0, column: 34 },
                   kind: "reference",
                   original: {
                     scope: originalScopes[0].children![0],
                     values: [["null"]],
-                    callsite: { sourceIndex: 1, line: 4, column: 3 },
+                    callsite: { sourceIndex: 1, line: 3, column: 2 },
                   },
                 }
               ],
@@ -214,17 +214,17 @@ test("original frames at column 1", () => {
     },
   ];
   expect(getOriginalFrames(
-  { line: 1, column: 1 },
-  { sourceIndex: 0, line: 5, column: 5 },
-  generatedScopes,
-  originalScopes,
-  debuggerScopes
-)).toMatchInlineSnapshot(`
+    { line: 0, column: 0 },
+    { sourceIndex: 0, line: 4, column: 4 },
+    generatedScopes,
+    originalScopes,
+    debuggerScopes
+  )).toMatchInlineSnapshot(`
 [
   {
     "location": {
-      "column": 5,
-      "line": 5,
+      "column": 4,
+      "line": 4,
       "sourceIndex": 0,
     },
     "name": "log",
@@ -269,8 +269,8 @@ test("original frames at column 1", () => {
   },
   {
     "location": {
-      "column": 3,
-      "line": 4,
+      "column": 2,
+      "line": 3,
       "sourceIndex": 1,
     },
     "name": "inner",
@@ -321,8 +321,8 @@ test("original frames at column 1", () => {
   },
   {
     "location": {
-      "column": 3,
-      "line": 8,
+      "column": 2,
+      "line": 7,
       "sourceIndex": 1,
     },
     "name": "outer",
@@ -373,8 +373,8 @@ test("original frames at column 1", () => {
   },
   {
     "location": {
-      "column": 1,
-      "line": 11,
+      "column": 0,
+      "line": 10,
       "sourceIndex": 1,
     },
     "name": undefined,
@@ -432,8 +432,8 @@ test("original frames at column 18", () => {
     },
   ];
   expect(getOriginalFrames(
-  { line: 1, column: 18 },
-  { sourceIndex: 0, line: 5, column: 5 },
+  { line: 0, column: 17 },
+  { sourceIndex: 0, line: 4, column: 4 },
   generatedScopes,
   originalScopes,
   debuggerScopes
@@ -441,8 +441,8 @@ test("original frames at column 18", () => {
 [
   {
     "location": {
-      "column": 5,
-      "line": 5,
+      "column": 4,
+      "line": 4,
       "sourceIndex": 0,
     },
     "name": "log",
@@ -487,8 +487,8 @@ test("original frames at column 18", () => {
   },
   {
     "location": {
-      "column": 3,
-      "line": 4,
+      "column": 2,
+      "line": 3,
       "sourceIndex": 1,
     },
     "name": "inner",
@@ -539,8 +539,8 @@ test("original frames at column 18", () => {
   },
   {
     "location": {
-      "column": 3,
-      "line": 8,
+      "column": 2,
+      "line": 7,
       "sourceIndex": 1,
     },
     "name": "outer",
@@ -591,8 +591,8 @@ test("original frames at column 18", () => {
   },
   {
     "location": {
-      "column": 1,
-      "line": 12,
+      "column": 0,
+      "line": 11,
       "sourceIndex": 1,
     },
     "name": undefined,

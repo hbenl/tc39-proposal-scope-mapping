@@ -9,50 +9,50 @@ Taken from https://github.com/tc39/source-map-rfc/issues/37#issuecomment-1777452
 Original sources:
 - one.js:
 ```javascript
-1 import { f } from "./two";
-2 let num = 42;
-3 f(num);
-4 console.log(num++);
+0 import { f } from "./two";
+1 let num = 42;
+2 f(num);
+3 console.log(num++);
 ```
 
 - two.js:
 ```javascript
-1 let increment = 1;
-2 export function f(x) {
-3   console.log(x + increment++);
-4 }
+0 let increment = 1;
+1 export function f(x) {
+2   console.log(x + increment++);
+3 }
 ```
 
 - Generated source:
 ```javascript
-1 let l = 1;
-2 let o = 42;
-3 var e;
-4 (e = o),
-5 console.log(e + l++),
-6 console.log(o++);
+0 let l = 1;
+1 let o = 42;
+2 var e;
+3 (e = o),
+4 console.log(e + l++),
+5 console.log(o++);
 ```
 */
 
 const scopeNames = ["f", "num", "increment", "x", "o", "l", "e"];
-const encodedOriginalScopes = ["CCCAAC,GoB", "CCCAEA,CCECAG,EE,AE"];
-const encodedGeneratedScopes = ";CCCAADI,AKCCAKD;;CKGACAGCM;;sB;kB,A";
+const encodedOriginalScopes = ["AACAAC,GmB", "AACAEA,CqBECAG,EC,AC"];
+const encodedGeneratedScopes = ",ACCAADI,AKCCAKD;;AKGACAEAM;;qB;iB,A";
 const originalScopes: OriginalScope[] = [
   {
-    start: { sourceIndex: 0, line: 1, column: 1 },
-    end: { sourceIndex: 0, line: 4, column: 20 },
+    start: { sourceIndex: 0, line: 0, column: 0 },
+    end: { sourceIndex: 0, line: 3, column: 19 },
     kind: "module",
     variables: ["f", "num"],
   },
   {
-    start: { sourceIndex: 1, line: 1, column: 1 },
-    end: { sourceIndex: 1, line: 4, column: 2 },
+    start: { sourceIndex: 1, line: 0, column: 0 },
+    end: { sourceIndex: 1, line: 3, column: 1 },
     kind: "module",
     variables: ["increment", "f"],
     children: [
       {
-        start: { sourceIndex: 1, line: 2, column: 1 },
-        end: { sourceIndex: 1, line: 4, column: 2 },
+        start: { sourceIndex: 1, line: 1, column: 21 },
+        end: { sourceIndex: 1, line: 3, column: 1 },
         kind: "function",
         name: "f",
         variables: ["x"],
@@ -62,8 +62,8 @@ const originalScopes: OriginalScope[] = [
 ];
 
 const generatedScopes: GeneratedScope = {
-  start: { line: 1, column: 1 },
-  end: { line: 6, column: 18 },
+  start: { line: 0, column: 0 },
+  end: { line: 5, column: 17 },
   kind: "module",
   original: {
     scope: originalScopes[0],
@@ -71,8 +71,8 @@ const generatedScopes: GeneratedScope = {
   },
   children: [
     {
-      start: { line: 1, column: 1 },
-      end: { line: 6, column: 18 },
+      start: { line: 0, column: 0 },
+      end: { line: 5, column: 17 },
       kind: "reference",
       original: {
         scope: originalScopes[1],
@@ -80,11 +80,11 @@ const generatedScopes: GeneratedScope = {
       },
       children: [
         {
-          start: { line: 3, column: 1 },
-          end: { line: 5, column: 22 },
+          start: { line: 2, column: 0 },
+          end: { line: 4, column: 21 },
           kind: "reference",
           original: {
-            callsite: { sourceIndex: 0, line: 3, column: 1 },
+            callsite: { sourceIndex: 0, line: 2, column: 0 },
             scope: originalScopes[1].children![0],
             values: [["e"]],
           },
@@ -125,8 +125,8 @@ test("original frames at line 5", () => {
     },
   ];
   expect(getOriginalFrames(
-    { line: 5, column: 1 },
-    { sourceIndex: 1, line: 3, column: 3 },
+    { line: 4, column: 0 },
+    { sourceIndex: 1, line: 2, column: 2 },
     generatedScopes,
     originalScopes,
     debuggerScopes
@@ -134,8 +134,8 @@ test("original frames at line 5", () => {
 [
   {
     "location": {
-      "column": 3,
-      "line": 3,
+      "column": 2,
+      "line": 2,
       "sourceIndex": 1,
     },
     "name": "f",
@@ -180,8 +180,8 @@ test("original frames at line 5", () => {
   },
   {
     "location": {
-      "column": 1,
-      "line": 3,
+      "column": 0,
+      "line": 2,
       "sourceIndex": 0,
     },
     "name": undefined,

@@ -8,68 +8,68 @@ Taken from https://szuend.github.io/scope-proposal-examples/04_inline_into_funct
 
 Original source:
 ```javascript
-const CALL_CHANCE = 0.5;
-
-function log(x) {
-  console.log(x);
-}
-
-function inner(x) {
-  log(x);
-}
-
-function outer(x) {
-  const shouldCall = Math.random() < CALL_CHANCE;
-  console.log('Do we log?', shouldCall);
-  if (shouldCall) {
-    inner(x);
-  }
-}
-
-outer(42);
-outer(null);
+0  const CALL_CHANCE = 0.5;
+1
+2  function log(x) {
+3    console.log(x);
+4  }
+5
+6  function inner(x) {
+7    log(x);
+8  }
+9
+10 function outer(x) {
+11   const shouldCall = Math.random() < CALL_CHANCE;
+12   console.log('Do we log?', shouldCall);
+13   if (shouldCall) {
+14     inner(x);
+15   }
+16 }
+17
+18 outer(42);
+19 outer(null);
 ```
 
 Generated source:
 ```javascript
-function a(c){const b=.5>Math.random();console.log("Do we log?",b);b&&console.log(c)}a(42);a(null);
+0 function a(c){const b=.5>Math.random();console.log("Do we log?",b);b&&console.log(c)}a(42);a(null);
 ```
 */
 
 const scopeNames = ["CALL_CHANCE", "log", "inner", "outer", "x", "shouldCall", "0.5", "c", "b"];
-const encodedOriginalScopes = ["CCCAACEG,EaECCI,EE,EmBECEI,EE,EmBECGIK,GmBIA,EI,CE,Ya"];
-const encodedGeneratedScopes = ";CCCAAMDDD,aECAGOQ,yDKGADAeKO,AKGADAPGO,c,A,C,c";
+const encodedOriginalScopes = ["AACAACEG,EgBECCI,EC,EkBECEI,EC,EkBECGIK,GkBIA,EG,CC,GY"];
+const encodedGeneratedScopes = ",ACCAAMDDD,aECAGOQ,yDKGADAcIO,AKGADAPEO,c,A,C,c";
 const originalScopes: OriginalScope[] = [
   {
-    start: { sourceIndex: 0, line: 1, column: 1 },
-    end: { sourceIndex: 0, line: 29, column: 13 },
+    start: { sourceIndex: 0, line: 0, column: 0 },
+    end: { sourceIndex: 0, line: 19, column: 12 },
     kind: "module",
     variables: ["CALL_CHANCE", "log", "inner", "outer"],
     children: [
       {
-        start: { sourceIndex: 0, line: 3, column: 13 },
-        end: { sourceIndex: 0, line: 5, column: 2 },
+        start: { sourceIndex: 0, line: 2, column: 16 },
+        end: { sourceIndex: 0, line: 4, column: 1 },
         kind: "function",
         name: "log",
         variables: ["x"],
       },
       {
-        start: { sourceIndex: 0, line: 7, column: 19 },
-        end: { sourceIndex: 0, line: 9, column: 2 },
+        start: { sourceIndex: 0, line: 6, column: 18 },
+        end: { sourceIndex: 0, line: 8, column: 1 },
         kind: "function",
         name: "inner",
         variables: ["x"],
       },
       {
-        start: { sourceIndex: 0, line: 11, column: 19 },
-        end: { sourceIndex: 0, line: 17, column: 2 },
+        start: { sourceIndex: 0, line: 10, column: 18 },
+        end: { sourceIndex: 0, line: 16, column: 1 },
         kind: "function",
         name: "outer",
         variables: ["x", "shouldCall"],
         children: [
           {
-            start: { sourceIndex: 0, line: 14, column: 19 },
-            end: { sourceIndex: 0, line: 16, column: 4 },
+            start: { sourceIndex: 0, line: 13, column: 18 },
+            end: { sourceIndex: 0, line: 15, column: 3 },
             kind: "block",
             variables: [],
           }
@@ -80,8 +80,8 @@ const originalScopes: OriginalScope[] = [
 ];
 
 const generatedScopes: GeneratedScope = {
-  start: { line: 1, column: 1 },
-  end: { line: 1, column: 100 },
+  start: { line: 0, column: 0 },
+  end: { line: 0, column: 99 },
   kind: "module",
   original: {
     scope: originalScopes[0],
@@ -89,8 +89,8 @@ const generatedScopes: GeneratedScope = {
   },
   children: [
     {
-      start: { line: 1, column: 14 },
-      end: { line: 1, column: 86 },
+      start: { line: 0, column: 13 },
+      end: { line: 0, column: 85 },
       kind: "function",
       original: {
         scope: originalScopes[0].children![2],
@@ -98,23 +98,23 @@ const generatedScopes: GeneratedScope = {
       },
       children: [
         {
-          start: { line: 1, column: 71 },
-          end: { line: 1, column: 85 },
+          start: { line: 0, column: 70 },
+          end: { line: 0, column: 84 },
           kind: "reference",
           original: {
             scope: originalScopes[0].children![1],
             values: [["c"]],
-            callsite: { sourceIndex: 0, line: 15, column: 5 },
+            callsite: { sourceIndex: 0, line: 14, column: 4 },
           },
           children: [
             {
-              start: { line: 1, column: 71 },
-              end: { line: 1, column: 85 },
+              start: { line: 0, column: 70 },
+              end: { line: 0, column: 84 },
               kind: "reference",
               original: {
                 scope: originalScopes[0].children![0],
                 values: [["c"]],
-                callsite: { sourceIndex: 0, line: 8, column: 3 },
+                callsite: { sourceIndex: 0, line: 7, column: 2 },
               },
             }
           ]
@@ -161,17 +161,17 @@ test("original frames at column 71", () => {
     },
   ];
   expect(getOriginalFrames(
-  { line: 1, column: 71 },
-  { sourceIndex: 0, line: 4, column: 3 },
-  generatedScopes,
-  originalScopes,
-  debuggerScopes
-)).toMatchInlineSnapshot(`
+    { line: 0, column: 70 },
+    { sourceIndex: 0, line: 3, column: 2 },
+    generatedScopes,
+    originalScopes,
+    debuggerScopes
+  )).toMatchInlineSnapshot(`
 [
   {
     "location": {
-      "column": 3,
-      "line": 4,
+      "column": 2,
+      "line": 3,
       "sourceIndex": 0,
     },
     "name": "log",
@@ -228,8 +228,8 @@ test("original frames at column 71", () => {
   },
   {
     "location": {
-      "column": 3,
-      "line": 8,
+      "column": 2,
+      "line": 7,
       "sourceIndex": 0,
     },
     "name": "inner",
@@ -286,8 +286,8 @@ test("original frames at column 71", () => {
   },
   {
     "location": {
-      "column": 5,
-      "line": 15,
+      "column": 4,
+      "line": 14,
       "sourceIndex": 0,
     },
     "name": undefined,

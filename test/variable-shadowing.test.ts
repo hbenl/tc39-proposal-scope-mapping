@@ -8,51 +8,51 @@ Taken from https://github.com/tc39/source-map-rfc/issues/37#issuecomment-1699356
 
 Original source:
 ```javascript
-1 function outer(num) {
-2   function inner(value) {
-3     const value_plus_one = value + 1;
-4     console.log(value_plus_one);
-5   }
-6   const num_plus_one = num + 1;
-7   inner(num_plus_one);
-8 }
-9 outer(1);
+0 function outer(num) {
+1   function inner(value) {
+2     const value_plus_one = value + 1;
+3     console.log(value_plus_one);
+4   }
+5   const num_plus_one = num + 1;
+6   inner(num_plus_one);
+7 }
+8 outer(1);
 ```
 
 Generated source:
 ```javascript
-1 function f(a) {
-2   function g(a) {
-3     const b = a + 1;
-4     console.log(b);
-5   }
-6   const b = a + 1;
-7   g(b);
-8 }
-9 f(1);
+0 function f(a) {
+1   function g(a) {
+2     const b = a + 1;
+3     console.log(b);
+4   }
+5   const b = a + 1;
+6   g(b);
+7 }
+8 f(1);
 ```
 */
 
 const scopeNames = ["outer", "inner", "num", "num_plus_one", "value", "value_plus_one", "f", "g", "a", "b"];
-const encodedOriginalScopes = ["CCCAA,ACECACEG,CGECCIK,GI,GE,CU"];
-const encodedGeneratedScopes = ";CCCAAM,AECACOQS;GECACQS;;;I;;;E;M";
+const encodedOriginalScopes = ["AACAA,AAECACEG,CEECCIK,GG,GC,CS"];
+const encodedGeneratedScopes = ",ACCAAM,AECACOQS;EECACQS;;;G;;;C;K";
 const originalScopes: OriginalScope[] = [
   {
-    start: { sourceIndex: 0, line: 1, column: 1 },
-    end: { sourceIndex: 0, line: 9, column: 10 },
+    start: { sourceIndex: 0, line: 0, column: 0 },
+    end: { sourceIndex: 0, line: 8, column: 9 },
     kind: "module",
     variables: ["outer"],
     children: [
       {
-        start: { sourceIndex: 0, line: 1, column: 1 },
-        end: { sourceIndex: 0, line: 8, column: 2 },
+        start: { sourceIndex: 0, line: 0, column: 0 },
+        end: { sourceIndex: 0, line: 7, column: 1 },
         kind: "function",
         name: "outer",
         variables: ["inner", "num", "num_plus_one"],
         children: [
           {
-            start: { sourceIndex: 0, line: 2, column: 3 },
-            end: { sourceIndex: 0, line: 5, column: 4 },
+            start: { sourceIndex: 0, line: 1, column: 2 },
+            end: { sourceIndex: 0, line: 4, column: 3 },
             kind: "function",
             name: "inner",
             variables: ["value", "value_plus_one"],
@@ -64,8 +64,8 @@ const originalScopes: OriginalScope[] = [
 ];
 
 const generatedScopes: GeneratedScope = {
-  start: { line: 1, column: 1 },
-  end: { line: 9, column: 6 },
+  start: { line: 0, column: 0 },
+  end: { line: 8, column: 5 },
   kind: "module",
   original: {
     scope: originalScopes[0],
@@ -73,8 +73,8 @@ const generatedScopes: GeneratedScope = {
   },
   children: [
     {
-      start: { line: 1, column: 1 },
-      end: { line: 8, column: 2 },
+      start: { line: 0, column: 0 },
+      end: { line: 7, column: 1 },
       original: {
         scope: originalScopes[0].children![0],
         values: [["g"], ["a"], ["b"]],
@@ -82,8 +82,8 @@ const generatedScopes: GeneratedScope = {
       kind: "function",
       children: [
         {
-          start: { line: 2, column: 3 },
-          end: { line: 5, column: 4 },
+          start: { line: 1, column: 2 },
+          end: { line: 4, column: 3 },
           kind: "function",
           original: {
             scope: originalScopes[0].children![0].children![0],
@@ -140,8 +140,8 @@ test("original frames at line 4", () => {
     },
   ];
   expect(getOriginalFrames(
-    { line: 4, column: 5 },
-    { sourceIndex: 0, line: 4, column: 5 },
+    { line: 3, column: 4 },
+    { sourceIndex: 0, line: 3, column: 4 },
     generatedScopes,
     originalScopes,
     debuggerScopes
@@ -149,8 +149,8 @@ test("original frames at line 4", () => {
 [
   {
     "location": {
-      "column": 5,
-      "line": 4,
+      "column": 4,
+      "line": 3,
       "sourceIndex": 0,
     },
     "name": "inner",

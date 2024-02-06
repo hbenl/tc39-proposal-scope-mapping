@@ -6,36 +6,36 @@ import { DebuggerScope, GeneratedScope, OriginalScope } from "../src/types";
 /**
 Original source:
 ```javascript
-function log(msg) {
-  console.log(msg);
-}
-let x = "foo";
-log(x);
-x = "bar";
-log(x);
+0 function log(msg) {
+1   console.log(msg);
+2 }
+3 let x = "foo";
+4 log(x);
+5 x = "bar";
+6 log(x);
 ```
 
 Generated source:
 ```javascript
-console.log("foo");
-console.log("bar");
+0 console.log("foo");
+1 console.log("bar");
 ```
 */
 
 const scopeNames = ["log", "x", "msg", "\"foo\"", "\"bar\""];
-const encodedOriginalScopes = ["CCCAAC,AmBECAE,EE,IQ"];
-const encodedGeneratedScopes = ";CCCAADFGCCI,AKGACAKCG,mB;CKGAAAECI,mB,A";
+const encodedOriginalScopes = ["AACAAC,AkBECAE,EC,IO"];
+const encodedGeneratedScopes = ",ACCAADFGCAI,AKGACAICG,mB;AKGAAAEAI,mB,A";
 
 const originalScopes: OriginalScope[] = [
   {
-    start: { sourceIndex: 0, line: 1, column: 1 },
-    end: { sourceIndex: 0, line: 7, column: 8 },
+    start: { sourceIndex: 0, line: 0, column: 0 },
+    end: { sourceIndex: 0, line: 6, column: 7 },
     kind: "module",
     variables: ["log", "x"],
     children: [
       {
-        start: { sourceIndex: 0, line: 1, column: 19 },
-        end: { sourceIndex: 0, line: 3, column: 2 },
+        start: { sourceIndex: 0, line: 0, column: 18 },
+        end: { sourceIndex: 0, line: 2, column: 1 },
         kind: "function",
         name: "log",
         variables: ["msg"],
@@ -45,33 +45,33 @@ const originalScopes: OriginalScope[] = [
 ];
 
 const generatedScopes: GeneratedScope = {
-  start: { line: 1, column: 1 },
-  end: { line: 2, column: 20 },
+  start: { line: 0, column: 0 },
+  end: { line: 1, column: 19 },
   kind: "module",
   original: {
     scope: originalScopes[0],
     values: [
       [undefined],
-      ["\"foo\"", [{ line: 2, column: 1 }, "\"bar\""]]
+      ["\"foo\"", [{ line: 1, column: 0 }, "\"bar\""]]
     ],
   },
   children: [
     {
-      start: { line: 1, column: 1 },
-      end: { line: 1, column: 20 },
+      start: { line: 0, column: 0 },
+      end: { line: 0, column: 19 },
       kind: "reference",
       original: {
-        callsite: { sourceIndex: 0, line: 5, column: 1 },
+        callsite: { sourceIndex: 0, line: 4, column: 1 },
         scope: originalScopes[0].children![0],
         values: [["\"foo\""]],
       },
     },
     {
-      start: { line: 2, column: 1 },
-      end: { line: 2, column: 20 },
+      start: { line: 1, column: 0 },
+      end: { line: 1, column: 19 },
       kind: "reference",
       original: {
-        callsite: { sourceIndex: 0, line: 7, column: 1 },
+        callsite: { sourceIndex: 0, line: 6, column: 0 },
         scope: originalScopes[0].children![0],
         values: [["\"bar\""]],
       },
@@ -110,8 +110,8 @@ test("original frames at line 1", () => {
     },
   ];
   expect(getOriginalFrames(
-  { line: 1, column: 1 },
-  { sourceIndex: 0, line: 2, column: 3 },
+  { line: 0, column: 0 },
+  { sourceIndex: 0, line: 1, column: 2 },
   generatedScopes,
   originalScopes,
   debuggerScopes
@@ -119,8 +119,8 @@ test("original frames at line 1", () => {
 [
   {
     "location": {
-      "column": 3,
-      "line": 2,
+      "column": 2,
+      "line": 1,
       "sourceIndex": 0,
     },
     "name": "log",
@@ -166,7 +166,7 @@ test("original frames at line 1", () => {
   {
     "location": {
       "column": 1,
-      "line": 5,
+      "line": 4,
       "sourceIndex": 0,
     },
     "name": undefined,
@@ -220,17 +220,17 @@ test("original frames at line 2", () => {
     },
   ];
   expect(getOriginalFrames(
-  { line: 2, column: 1 },
-  { sourceIndex: 0, line: 2, column: 3 },
-  generatedScopes,
-  originalScopes,
-  debuggerScopes
-)).toMatchInlineSnapshot(`
+    { line: 1, column: 0 },
+    { sourceIndex: 0, line: 1, column: 2 },
+    generatedScopes,
+    originalScopes,
+    debuggerScopes
+  )).toMatchInlineSnapshot(`
 [
   {
     "location": {
-      "column": 3,
-      "line": 2,
+      "column": 2,
+      "line": 1,
       "sourceIndex": 0,
     },
     "name": "log",
@@ -275,8 +275,8 @@ test("original frames at line 2", () => {
   },
   {
     "location": {
-      "column": 1,
-      "line": 7,
+      "column": 0,
+      "line": 6,
       "sourceIndex": 0,
     },
     "name": undefined,
