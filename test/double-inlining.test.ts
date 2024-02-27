@@ -59,7 +59,7 @@ const generatedRanges: GeneratedRange = {
   kind: "module",
   original: {
     scope: originalScopes[0],
-    values: [[undefined], [undefined]],
+    bindings: [undefined, undefined],
   },
   children: [
     {
@@ -69,7 +69,7 @@ const generatedRanges: GeneratedRange = {
       original: {
         callsite: { sourceIndex: 0, line: 7, column: 0 },
         scope: originalScopes[0].children![1],
-        values: [['"amet"']],
+        bindings: ['"amet"'],
       },
       children: [
         {
@@ -79,7 +79,7 @@ const generatedRanges: GeneratedRange = {
           original: {
             callsite: { sourceIndex: 0, line: 4, column: 2 },
             scope: originalScopes[0].children![0],
-            values: [['"ipsum"']],
+            bindings: ['"ipsum"'],
           },
         }
       ],

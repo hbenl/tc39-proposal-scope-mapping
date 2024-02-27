@@ -65,7 +65,7 @@ const generatedRanges: GeneratedRange = {
   kind: "module",
   original: {
     scope: originalScopes[0],
-    values: [],
+    bindings: [],
   },
   children: [
     {
@@ -74,7 +74,7 @@ const generatedRanges: GeneratedRange = {
       kind: "block",
       original: {
         scope: originalScopes[0].children![0],
-        values: [["x1"]],
+        bindings: ["x1"],
       },
       children: [
         {
@@ -83,7 +83,7 @@ const generatedRanges: GeneratedRange = {
           kind: "reference",
           original: {
             scope: originalScopes[0].children![0].children![0],
-            values: [["x2"]],
+            bindings: ["x2"],
           },
         }
       ],

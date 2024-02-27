@@ -12,11 +12,15 @@ export interface OriginalLocation extends Location {
   sourceIndex: number;
 }
 
+export interface BindingRange {
+  start: Location;
+  end: Location;
+  expression?: string;
+}
+
 // use "reference" for scopes that only reference an original scope but
 // don't correspond to a scope in the generated code
 export type ScopeKind = "module" | "class" | "function" | "block" | "reference";
-
-export type MultiValue = [string | undefined, ...([Location, string | undefined][])];
 
 export interface GeneratedRange {
   start: Location;
@@ -27,7 +31,7 @@ export interface GeneratedRange {
     callsite?: OriginalLocation;
     scope: OriginalScope;
     // this needs to have the same length as the referenced scope's variables
-    values: MultiValue[];
+    bindings?: (string | undefined | BindingRange[])[];
   };
   children?: GeneratedRange[];
 }
@@ -37,7 +41,7 @@ export interface OriginalScope {
   end: OriginalLocation;
   kind: Exclude<ScopeKind, "reference">;
   name?: string;
-  variables: string[];
+  variables?: string[];
   children?: OriginalScope[];
 }
 

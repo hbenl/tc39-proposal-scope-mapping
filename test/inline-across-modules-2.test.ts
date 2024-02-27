@@ -89,7 +89,7 @@ const generatedRanges: GeneratedRange = {
   kind: "module",
   original: {
     scope: originalScopes[1],
-    values: [[undefined], [undefined], [undefined]],
+    bindings: [undefined, undefined, undefined],
   },
   children: [
     {
@@ -98,7 +98,7 @@ const generatedRanges: GeneratedRange = {
       kind: "reference",
       original: {
         scope: originalScopes[0],
-        values: [["\"module_constant\""], [undefined]],
+        bindings: ["\"module_constant\"", undefined],
       },
       children: [
         {
@@ -107,7 +107,7 @@ const generatedRanges: GeneratedRange = {
           kind: "reference",
           original: {
             scope: originalScopes[1].children![1],
-            values: [["42"]],
+            bindings: ["42"],
             callsite: { sourceIndex: 1, line: 10, column: 0 },
           },
           children: [
@@ -117,7 +117,7 @@ const generatedRanges: GeneratedRange = {
               kind: "reference",
               original: {
                 scope: originalScopes[1].children![0],
-                values: [["42"]],
+                bindings: ["42"],
                 callsite: { sourceIndex: 1, line: 7, column: 2 },
               },
               children: [
@@ -127,7 +127,7 @@ const generatedRanges: GeneratedRange = {
                   kind: "reference",
                   original: {
                     scope: originalScopes[0].children![0],
-                    values: [["42"]],
+                    bindings: ["42"],
                     callsite: { sourceIndex: 1, line: 3, column: 2 },
                   },
                 }
@@ -143,7 +143,7 @@ const generatedRanges: GeneratedRange = {
       kind: "reference",
       original: {
         scope: originalScopes[0],
-        values: [["\"module_constant\""], [undefined]],
+        bindings: ["\"module_constant\"", undefined],
       },
       children: [
         {
@@ -152,7 +152,7 @@ const generatedRanges: GeneratedRange = {
           kind: "reference",
           original: {
             scope: originalScopes[1].children![1],
-            values: [["null"]],
+            bindings: ["null"],
             callsite: { sourceIndex: 1, line: 11, column: 0 },
           },
           children: [
@@ -162,7 +162,7 @@ const generatedRanges: GeneratedRange = {
               kind: "reference",
               original: {
                 scope: originalScopes[1].children![0],
-                values: [["null"]],
+                bindings: ["null"],
                 callsite: { sourceIndex: 1, line: 7, column: 2 },
               },
               children: [
@@ -172,7 +172,7 @@ const generatedRanges: GeneratedRange = {
                   kind: "reference",
                   original: {
                     scope: originalScopes[0].children![0],
-                    values: [["null"]],
+                    bindings: ["null"],
                     callsite: { sourceIndex: 1, line: 3, column: 2 },
                   },
                 }

@@ -1,5 +1,5 @@
 import { decode } from "vlq";
-import { GeneratedRange, OriginalScope, MultiValue } from "./types";
+import { GeneratedRange, OriginalScope, BindingRange } from "./types";
 import { getScopeItems, scopeKinds } from "./util";
 import { assert } from "./util";
 
@@ -119,15 +119,16 @@ function _decodeGeneratedRanges(lineItems: LineItem[], names: string[], original
     const hasCallsite = !!(flags & 2);
 
     let original: GeneratedRange["original"] | undefined = undefined;
+    let callsite: NonNullable<GeneratedRange["original"]>["callsite"] | undefined = undefined;
+    let scope: OriginalScope | undefined = undefined;
     if (hasOriginal) {
       assert(startItem.item.length > 1);
       const sourceIndex = startItem.item.shift()! + state.currentOriginalScopeSourceIndex;
       const scopeIndex = startItem.item.shift()! + (sourceIndex === state.currentOriginalScopeSourceIndex ? state.currentOriginalScopeIndex : 0);
       state.currentOriginalScopeSourceIndex = sourceIndex;
       state.currentOriginalScopeIndex = scopeIndex;
-      const scope = findOriginalScope(originalScopes, sourceIndex, scopeIndex);
+      scope = findOriginalScope(originalScopes, sourceIndex, scopeIndex);
 
-      let callsite: NonNullable<GeneratedRange["original"]>["callsite"] | undefined = undefined;
       if (hasCallsite) {
         assert(startItem.item.length > 2);
         const sourceIndex = startItem.item.shift()! + state.currentCallsiteSourceIndex;
@@ -137,33 +138,6 @@ function _decodeGeneratedRanges(lineItems: LineItem[], names: string[], original
         state.currentCallsiteLine = line;
         state.currentCallsiteColumn = column;
         callsite = { sourceIndex, line, column };
-      }
-
-      const values: MultiValue[] = [];
-      while (startItem.item.length > 0) {
-        let indexOrLength = startItem.item.shift()!;
-        let value: MultiValue;
-        if (indexOrLength >= -1) {
-          value = [lookupName(names, indexOrLength)];
-        } else {
-          value = [lookupName(names, startItem.item.shift()!)];
-          let currentLine = state.currentLine;
-          let currentColumn = state.currentColumn;
-          while (indexOrLength < -1) {
-            const line = currentLine + startItem.item.shift()!;
-            const column = startItem.item.shift()! + (line === currentLine ? currentColumn : 0);
-            value.push([{ line, column }, lookupName(names, startItem.item.shift()!)]);
-            currentLine = line;
-            currentColumn = column;
-            indexOrLength++;
-          }
-        }
-        values.push(value);
-      }
-
-      original = { scope, values };
-      if (callsite) {
-        original.callsite = callsite;
       }
     }
 
@@ -175,6 +149,47 @@ function _decodeGeneratedRanges(lineItems: LineItem[], names: string[], original
     const endItem = lineItems.shift();
     assert(endItem && endItem.item.length === 1);
     const endColumn = endItem.item.shift()! + (endItem.line === state.currentLine ? state.currentColumn : 0);
+
+    if (hasOriginal) {
+      const bindings: (string | undefined | BindingRange[])[] = [];
+      while (startItem.item.length > 0) {
+        let indexOrLength = startItem.item.shift()!;
+        if (indexOrLength >= -1) {
+          bindings.push(lookupName(names, indexOrLength));
+        } else {
+          let currentExpression = lookupName(names, startItem.item.shift()!);
+          const bindingRanges: BindingRange[] = [];
+          let currentLine = startItem.line;
+          let currentColumn = startColumn;
+          while (indexOrLength < -1) {
+            const line = currentLine + startItem.item.shift()!;
+            const column = startItem.item.shift()! + (line === currentLine ? currentColumn : 0);
+            bindingRanges.push({
+              start: { line: currentLine, column: currentColumn },
+              end: { line, column },
+              expression: currentExpression,
+            });
+            currentLine = line;
+            currentColumn = column;
+            currentExpression = lookupName(names, startItem.item.shift()!);
+            indexOrLength++;
+          }
+          bindingRanges.push({
+            start: { line: currentLine, column: currentColumn },
+            end: { line: endItem.line, column: endColumn },
+            expression: currentExpression,
+          });
+          bindings.push(bindingRanges);
+        }
+      }
+
+      assert(scope);
+      original = { scope, bindings };
+      if (callsite) {
+        original.callsite = callsite;
+      }
+    }
+
     state.currentLine = endItem.line;
     state.currentColumn = endColumn;
 

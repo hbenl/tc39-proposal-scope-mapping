@@ -43,21 +43,26 @@ function getOriginalFrame(
     const debuggerScopeChainForLookup = debuggerScopeChain.slice(0, debuggerScopeIndex + 1);
 
     const originalBindings: DebuggerScopeBinding[] = [];
-    assert(originalScope.variables.length === generatedRange.original.values.length);
-    for (let j = 0; j < originalScope.variables.length; j++) {
-      const varname = originalScope.variables[j];
-      const expressions = generatedRange.original.values[j];
-      let expression: string | undefined = expressions[0];
-      for (const [loc, expr] of expressions.slice(1) as [Location, string | undefined][]) {
-        if (loc.line > generatedLocation.line || (loc.line === generatedLocation.line && loc.column > generatedLocation.column)) {
-          break;
+    assert(originalScope.variables?.length === generatedRange.original.bindings?.length);
+    if (originalScope.variables && generatedRange.original.bindings) {
+      for (let j = 0; j < originalScope.variables.length; j++) {
+        const varname = originalScope.variables[j];
+        const expressionOrBindingRanges = generatedRange.original.bindings[j];
+        let expression: string | undefined = undefined;
+        if (typeof expressionOrBindingRanges === "string") {
+          expression = expressionOrBindingRanges;
+        } else if (typeof expressionOrBindingRanges !== "undefined") {
+          for (const bindingRange of expressionOrBindingRanges) {
+            if (isInRange(generatedLocation, bindingRange)) {
+              expression = bindingRange.expression;
+            }
+          }
         }
-        expression = expr;
+        // We use `lookupScopeValue()`, which only works if `expression` is the name of a
+        // generated variable or a string expression; to support arbitrary expressions we'd need to use `evaluateWithScopes()`
+        const value = expression !== undefined ? lookupScopeValue(expression, debuggerScopeChainForLookup) : { unavailable: true } as UnavailableValue;
+        originalBindings.push({ varname, value });
       }
-      // We use `lookupScopeValue()`, which only works if `expression` is the name of a
-      // generated variable or a string expression; to support arbitrary expressions we'd need to use `evaluateWithScopes()`
-      const value = expression !== undefined ? lookupScopeValue(expression, debuggerScopeChainForLookup) : { unavailable: true } as UnavailableValue;
-      originalBindings.push({ varname, value });
     }
     return { bindings: originalBindings };
   });

@@ -17,7 +17,7 @@ export function encodeOriginalScopes(originalScope: OriginalScope, names: string
       if (item.scope.name) {
         encodedItem += encode(getNameIndex(item.scope.name, names));
       }
-      for (const variableName of item.scope.variables) {
+      for (const variableName of item.scope.variables ?? []) {
         encodedItem += encode(getNameIndex(variableName, names));
       }
       currentLine = item.scope.start.line;
@@ -82,28 +82,34 @@ export function encodeGeneratedRanges(generatedRange: GeneratedRange, originalSc
           currentCallsiteColumn = callsite.column;
         }
 
-        for (const value of item.scope.original.values) {
-          assert(value.length > 0);
-          if (value.length === 1) {
-            encodedScopes += encode(value[0] ? getNameIndex(value[0], names) : -1);
+        for (const expressionOrBindingRanges of item.scope.original.bindings ?? []) {
+          if (typeof expressionOrBindingRanges === "undefined") {
+            encodedScopes += encode(-1);
+          } else if (typeof expressionOrBindingRanges === "string") {
+            encodedScopes += encode(getNameIndex(expressionOrBindingRanges, names));
           } else {
-            encodedScopes += encode(-value.length);
-            encodedScopes += encode(value[0] ? getNameIndex(value[0], names) : -1);
-            let currentLine = item.scope.start.line;
-            let currentColumn = item.scope.start.column;
-            for (const [loc, val] of value.slice(1) as [Location, string | undefined][]) {
-              if (loc.line === currentLine) {
-                assert(loc.column > currentColumn);
-                encodedScopes += encode(0);
-                encodedScopes += encode(loc.column - currentColumn);
-              } else {
-                assert(loc.line > currentLine);
-                encodedScopes += encode(loc.line - currentLine);
-                encodedScopes += encode(loc.column);
+            assert(expressionOrBindingRanges.length > 0);
+            if (expressionOrBindingRanges.length === 1) {
+              encodedScopes += encode(expressionOrBindingRanges[0].expression ? getNameIndex(expressionOrBindingRanges[0].expression, names) : -1);
+            } else {
+              encodedScopes += encode(-expressionOrBindingRanges.length);
+              encodedScopes += encode(expressionOrBindingRanges[0].expression ? getNameIndex(expressionOrBindingRanges[0].expression, names) : -1);
+              let currentLine = item.scope.start.line;
+              let currentColumn = item.scope.start.column;
+              for (const { start, expression } of expressionOrBindingRanges.slice(1)) {
+                if (start.line === currentLine) {
+                  assert(start.column > currentColumn);
+                  encodedScopes += encode(0);
+                  encodedScopes += encode(start.column - currentColumn);
+                } else {
+                  assert(start.line > currentLine);
+                  encodedScopes += encode(start.line - currentLine);
+                  encodedScopes += encode(start.column);
+                }
+                currentLine = start.line;
+                currentColumn = start.column;
+                encodedScopes += encode(expression ? getNameIndex(expression, names) : -1);
               }
-              currentLine = loc.line;
-              currentColumn = loc.column;
-              encodedScopes += encode(val ? getNameIndex(val, names) : -1);
             }
           }
         }

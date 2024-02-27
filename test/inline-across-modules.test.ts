@@ -67,7 +67,7 @@ const generatedRanges: GeneratedRange = {
   kind: "module",
   original: {
     scope: originalScopes[0],
-    values: [[undefined], ["o"]],
+    bindings: [undefined, "o"],
   },
   children: [
     {
@@ -76,7 +76,7 @@ const generatedRanges: GeneratedRange = {
       kind: "reference",
       original: {
         scope: originalScopes[1],
-        values: [["l"], [undefined]],
+        bindings: ["l", undefined],
       },
       children: [
         {
@@ -86,7 +86,7 @@ const generatedRanges: GeneratedRange = {
           original: {
             callsite: { sourceIndex: 0, line: 2, column: 0 },
             scope: originalScopes[1].children![0],
-            values: [["e"]],
+            bindings: ["e"],
           },
         }
       ]

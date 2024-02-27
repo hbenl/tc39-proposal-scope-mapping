@@ -50,9 +50,17 @@ const generatedRanges: GeneratedRange = {
   kind: "module",
   original: {
     scope: originalScopes[0],
-    values: [
-      [undefined],
-      ["\"foo\"", [{ line: 1, column: 0 }, "\"bar\""]]
+    bindings: [
+      undefined,
+      [{
+        start: { line: 0, column: 0 },
+        end: { line: 1, column: 0 },
+        expression: "\"foo\""
+      }, {
+        start: { line: 1, column: 0 },
+        end: { line: 1, column: 19 },
+        expression: "\"bar\""
+      }]
     ],
   },
   children: [
@@ -63,7 +71,7 @@ const generatedRanges: GeneratedRange = {
       original: {
         callsite: { sourceIndex: 0, line: 4, column: 1 },
         scope: originalScopes[0].children![0],
-        values: [["\"foo\""]],
+        bindings: ["\"foo\""],
       },
     },
     {
@@ -73,7 +81,7 @@ const generatedRanges: GeneratedRange = {
       original: {
         callsite: { sourceIndex: 0, line: 6, column: 0 },
         scope: originalScopes[0].children![0],
-        values: [["\"bar\""]],
+        bindings: ["\"bar\""],
       },
     }
   ]
