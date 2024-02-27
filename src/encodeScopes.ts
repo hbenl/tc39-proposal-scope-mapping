@@ -1,5 +1,5 @@
 import { encode } from "vlq";
-import { GeneratedScope, Location, OriginalScope, ScopeKind } from "./types";
+import { GeneratedRange, Location, OriginalScope } from "./types";
 import { assert, getScopeItems, scopeKinds } from "./util";
 
 export function encodeOriginalScopes(originalScope: OriginalScope, names: string[]): string {
@@ -33,7 +33,7 @@ export function encodeOriginalScopes(originalScope: OriginalScope, names: string
   return encodedItems.join(",");
 }
 
-export function encodeGeneratedScopes(generatedScope: GeneratedScope, originalScopes: OriginalScope[], names: string[]): string {
+export function encodeGeneratedRanges(generatedRange: GeneratedRange, originalScopes: OriginalScope[], names: string[]): string {
   let currentLine = 0;
   let currentColumn = 0;
   let currentOriginalScopeSourceIndex = 0;
@@ -55,7 +55,7 @@ export function encodeGeneratedScopes(generatedScope: GeneratedScope, originalSc
     currentColumn = location.column;
   }
 
-  const items = getScopeItems(generatedScope);
+  const items = getScopeItems(generatedRange);
   for (let i = 0; i < items.length; i++) {
     const item = items[i];
 

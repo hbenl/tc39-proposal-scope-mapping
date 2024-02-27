@@ -1,7 +1,7 @@
-import { decodeGeneratedScopes, decodeOriginalScopes } from "../src/decodeScopes";
-import { encodeGeneratedScopes, encodeOriginalScopes } from "../src/encodeScopes";
+import { decodeGeneratedRanges, decodeOriginalScopes } from "../src/decodeScopes";
+import { encodeGeneratedRanges, encodeOriginalScopes } from "../src/encodeScopes";
 import { getOriginalFrames } from "../src/getOriginalFrames";
-import { DebuggerScope, GeneratedScope, OriginalScope } from "../src/types";
+import { DebuggerScope, GeneratedRange, OriginalScope } from "../src/types";
 
 /**
 Taken from https://github.com/tc39/source-map-rfc/issues/37#issuecomment-1777452640
@@ -36,7 +36,7 @@ Original sources:
 
 const scopeNames = ["f", "num", "increment", "x", "o", "l", "e"];
 const encodedOriginalScopes = ["AACAAC,GmB", "AACAEA,CqBECAG,EC,AC"];
-const encodedGeneratedScopes = ",ACCAADI,AKCCAKD;;AKGACAEAM;;qB;iB,A";
+const encodedGeneratedRanges = ",ACCAADI,AKCCAKD;;AKGACAEAM;;qB;iB,A";
 const originalScopes: OriginalScope[] = [
   {
     start: { sourceIndex: 0, line: 0, column: 0 },
@@ -61,7 +61,7 @@ const originalScopes: OriginalScope[] = [
   }
 ];
 
-const generatedScopes: GeneratedScope = {
+const generatedRanges: GeneratedRange = {
   start: { line: 0, column: 0 },
   end: { line: 5, column: 17 },
   kind: "module",
@@ -96,15 +96,15 @@ const generatedScopes: GeneratedScope = {
 
 test("decode scopes from sourcemap", () => {
   expect(decodeOriginalScopes(encodedOriginalScopes, scopeNames)).toStrictEqual(originalScopes);
-  expect(decodeGeneratedScopes(encodedGeneratedScopes, scopeNames, originalScopes)).toStrictEqual(generatedScopes);
+  expect(decodeGeneratedRanges(encodedGeneratedRanges, scopeNames, originalScopes)).toStrictEqual(generatedRanges);
 });
 
 test("encode scopes to sourcemap", () => {
   const names: string[] = [];
   const encodedOriginal = originalScopes.map(scope => encodeOriginalScopes(scope, names));
-  const encodedGenerated = encodeGeneratedScopes(generatedScopes, originalScopes, names);
+  const encodedGenerated = encodeGeneratedRanges(generatedRanges, originalScopes, names);
   expect(encodedOriginal).toStrictEqual(encodedOriginalScopes);
-  expect(encodedGenerated).toStrictEqual(encodedGeneratedScopes);
+  expect(encodedGenerated).toStrictEqual(encodedGeneratedRanges);
   expect(names).toStrictEqual(scopeNames);
 });
 
@@ -127,7 +127,7 @@ test("original frames at line 5", () => {
   expect(getOriginalFrames(
     { line: 4, column: 0 },
     { sourceIndex: 1, line: 2, column: 2 },
-    generatedScopes,
+    generatedRanges,
     originalScopes,
     debuggerScopes
   )).toMatchInlineSnapshot(`

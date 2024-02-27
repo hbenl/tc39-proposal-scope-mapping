@@ -1,5 +1,5 @@
 import { decode } from "vlq";
-import { GeneratedScope, OriginalScope, MultiValue } from "./types";
+import { GeneratedRange, OriginalScope, MultiValue } from "./types";
 import { getScopeItems, scopeKinds } from "./util";
 import { assert } from "./util";
 
@@ -77,11 +77,11 @@ interface LineItem {
   item: number[];
 }
 
-export function decodeGeneratedScopes(encodedScopes: string, names: string[], originalScopes: OriginalScope[]) {
+export function decodeGeneratedRanges(encodedScopes: string, names: string[], originalScopes: OriginalScope[]) {
   const lineItems: LineItem[] = encodedScopes.split(";").flatMap((items, line) =>
     items.split(",").filter(Boolean).map(item => ({ line, item: decode(item) }))
   );
-  const decoded = _decodeGeneratedScopes(lineItems, names, originalScopes, {
+  const decoded = _decodeGeneratedRanges(lineItems, names, originalScopes, {
     currentLine: 0,
     currentColumn: 0,
     currentOriginalScopeSourceIndex: 0,
@@ -94,7 +94,7 @@ export function decodeGeneratedScopes(encodedScopes: string, names: string[], or
   return decoded[0];
 }
 
-interface GeneratedScopesDecodeState {
+interface GeneratedRangesDecodeState {
   currentLine: number;
   currentColumn: number;
   currentOriginalScopeSourceIndex: number;
@@ -104,8 +104,8 @@ interface GeneratedScopesDecodeState {
   currentCallsiteColumn: number;
 }
 
-function _decodeGeneratedScopes(lineItems: LineItem[], names: string[], originalScopes: OriginalScope[], state: GeneratedScopesDecodeState): GeneratedScope[] {
-  const generatedScopes: GeneratedScope[] = [];
+function _decodeGeneratedRanges(lineItems: LineItem[], names: string[], originalScopes: OriginalScope[], state: GeneratedRangesDecodeState): GeneratedRange[] {
+  const generatedRanges: GeneratedRange[] = [];
 
   while (lineItems.length > 0 && getGeneratedItemKind(lineItems[0].item) === "start") {
     const startItem = lineItems.shift();
@@ -118,7 +118,7 @@ function _decodeGeneratedScopes(lineItems: LineItem[], names: string[], original
     const hasOriginal = !!(flags & 1);
     const hasCallsite = !!(flags & 2);
 
-    let original: GeneratedScope["original"] | undefined = undefined;
+    let original: GeneratedRange["original"] | undefined = undefined;
     if (hasOriginal) {
       assert(startItem.item.length > 1);
       const sourceIndex = startItem.item.shift()! + state.currentOriginalScopeSourceIndex;
@@ -127,7 +127,7 @@ function _decodeGeneratedScopes(lineItems: LineItem[], names: string[], original
       state.currentOriginalScopeIndex = scopeIndex;
       const scope = findOriginalScope(originalScopes, sourceIndex, scopeIndex);
 
-      let callsite: NonNullable<GeneratedScope["original"]>["callsite"] | undefined = undefined;
+      let callsite: NonNullable<GeneratedRange["original"]>["callsite"] | undefined = undefined;
       if (hasCallsite) {
         assert(startItem.item.length > 2);
         const sourceIndex = startItem.item.shift()! + state.currentCallsiteSourceIndex;
@@ -167,9 +167,9 @@ function _decodeGeneratedScopes(lineItems: LineItem[], names: string[], original
       }
     }
 
-    let children: GeneratedScope[] = [];
+    let children: GeneratedRange[] = [];
     if (getGeneratedItemKind(lineItems[0].item) === "start") {
-      children = _decodeGeneratedScopes(lineItems, names, originalScopes, state);
+      children = _decodeGeneratedRanges(lineItems, names, originalScopes, state);
     }
 
     const endItem = lineItems.shift();
@@ -178,21 +178,21 @@ function _decodeGeneratedScopes(lineItems: LineItem[], names: string[], original
     state.currentLine = endItem.line;
     state.currentColumn = endColumn;
 
-    const generatedScope: GeneratedScope = {
+    const generatedRange: GeneratedRange = {
       start: { line: startItem.line, column: startColumn },
       end: { line: endItem.line, column: endColumn },
       kind,
     };
     if (original) {
-      generatedScope.original = original;
+      generatedRange.original = original;
     }
     if (children.length > 0) {
-      generatedScope.children = children;
+      generatedRange.children = children;
     }
-    generatedScopes.push(generatedScope);
+    generatedRanges.push(generatedRange);
   }
 
-  return generatedScopes;
+  return generatedRanges;
 }
 
 function getGeneratedItemKind(item: number[]): "start" | "end" {

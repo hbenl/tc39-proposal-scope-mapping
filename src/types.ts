@@ -18,7 +18,7 @@ export type ScopeKind = "module" | "class" | "function" | "block" | "reference";
 
 export type MultiValue = [string | undefined, ...([Location, string | undefined][])];
 
-export interface GeneratedScope {
+export interface GeneratedRange {
   start: Location;
   end: Location;
   kind: ScopeKind;
@@ -29,7 +29,7 @@ export interface GeneratedScope {
     // this needs to have the same length as the referenced scope's variables
     values: MultiValue[];
   };
-  children?: GeneratedScope[];
+  children?: GeneratedRange[];
 }
 
 export interface OriginalScope {

@@ -1,4 +1,4 @@
-import { GeneratedScope, Location, LocationRange, OriginalScope, ScopeKind } from "./types";
+import { GeneratedRange, Location, LocationRange, OriginalScope, ScopeKind } from "./types";
 
 export function assert(condition: any): asserts condition {
   if (!condition) {
@@ -41,12 +41,12 @@ export function compareLocations(loc1: Location, loc2: Location) {
 
 export const scopeKinds: ScopeKind[] = ["module", "function", "class", "block", "reference"];
 
-export interface ScopeItem<T extends OriginalScope | GeneratedScope> {
+export interface ScopeItem<T extends OriginalScope | GeneratedRange> {
   kind: "start" | "end";
   scope: T;
 }
 
-export function getScopeItems<T extends OriginalScope | GeneratedScope>(scope: T): ScopeItem<T>[] {
+export function getScopeItems<T extends OriginalScope | GeneratedRange>(scope: T): ScopeItem<T>[] {
   const children = (scope.children as T[] | undefined) ?? [];
   const childItems = children.flatMap(getScopeItems);
   return [
