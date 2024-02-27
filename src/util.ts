@@ -39,7 +39,7 @@ export function compareLocations(loc1: Location, loc2: Location) {
   }
 }
 
-export const scopeKinds: ScopeKind[] = ["module", "function", "class", "block", "reference"];
+export const scopeKinds: ScopeKind[] = ["module", "function", "class", "block"];
 
 export interface ScopeItem<T extends OriginalScope | GeneratedRange> {
   kind: "start" | "end";

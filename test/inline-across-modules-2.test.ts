@@ -42,7 +42,7 @@ Original sources:
 
 const scopeNames = ["MODULE_CONSTANT", "Logger", "log", "x", "inner", "outer", "\"module_constant\"", "42", "null"];
 const encodedOriginalScopes = ["AACAAC,GgBECEG,EG,CC", "AACACIK,EkBECIG,EC,EkBECKG,EC,GY"];
-const encodedGeneratedRanges = ",ACCCADDD,AKCDAMD,AKGCECUAO,AKGADAHEO,AKGDCAJEO,gB,A,A,A,AKCADMD,AKGCEAQAQ,AKGADAJEQ,AKGDCAJEQ,kB,A,A,A,A";
+const encodedGeneratedRanges = ",AKCADDD,ACDAMD,AGCECUAO,AGADAHEO,AGDCAJEO,gB,A,A,A,ACADMD,AGCEAQAQ,AGADAJEQ,AGDCAJEQ,kB,A,A,A,A";
 const originalScopes: OriginalScope[] = [
   {
     start: { sourceIndex: 0, line: 0, column: 0 },
@@ -86,7 +86,7 @@ const originalScopes: OriginalScope[] = [
 const generatedRanges: GeneratedRange = {
   start: { line: 0, column: 0 },
   end: { line: 0, column: 34 },
-  kind: "module",
+  isScope: true,
   original: {
     scope: originalScopes[1],
     bindings: [undefined, undefined, undefined],
@@ -95,7 +95,7 @@ const generatedRanges: GeneratedRange = {
     {
       start: { line: 0, column: 0 },
       end: { line: 0, column: 16 },
-      kind: "reference",
+      isScope: false,
       original: {
         scope: originalScopes[0],
         bindings: ["\"module_constant\"", undefined],
@@ -104,7 +104,7 @@ const generatedRanges: GeneratedRange = {
         {
           start: { line: 0, column: 0 },
           end: { line: 0, column: 16 },
-          kind: "reference",
+          isScope: false,
           original: {
             scope: originalScopes[1].children![1],
             bindings: ["42"],
@@ -114,7 +114,7 @@ const generatedRanges: GeneratedRange = {
             {
               start: { line: 0, column: 0 },
               end: { line: 0, column: 16 },
-              kind: "reference",
+              isScope: false,
               original: {
                 scope: originalScopes[1].children![0],
                 bindings: ["42"],
@@ -124,7 +124,7 @@ const generatedRanges: GeneratedRange = {
                 {
                   start: { line: 0, column: 0 },
                   end: { line: 0, column: 16 },
-                  kind: "reference",
+                  isScope: false,
                   original: {
                     scope: originalScopes[0].children![0],
                     bindings: ["42"],
@@ -140,7 +140,7 @@ const generatedRanges: GeneratedRange = {
     {
       start: { line: 0, column: 16 },
       end: { line: 0, column: 34 },
-      kind: "reference",
+      isScope: false,
       original: {
         scope: originalScopes[0],
         bindings: ["\"module_constant\"", undefined],
@@ -149,7 +149,7 @@ const generatedRanges: GeneratedRange = {
         {
           start: { line: 0, column: 16 },
           end: { line: 0, column: 34 },
-          kind: "reference",
+          isScope: false,
           original: {
             scope: originalScopes[1].children![1],
             bindings: ["null"],
@@ -159,7 +159,7 @@ const generatedRanges: GeneratedRange = {
             {
               start: { line: 0, column: 16 },
               end: { line: 0, column: 34 },
-              kind: "reference",
+              isScope: false,
               original: {
                 scope: originalScopes[1].children![0],
                 bindings: ["null"],
@@ -169,7 +169,7 @@ const generatedRanges: GeneratedRange = {
                 {
                   start: { line: 0, column: 16 },
                   end: { line: 0, column: 34 },
-                  kind: "reference",
+                  isScope: false,
                   original: {
                     scope: originalScopes[0].children![0],
                     bindings: ["null"],

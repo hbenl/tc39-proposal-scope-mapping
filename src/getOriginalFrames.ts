@@ -100,7 +100,7 @@ function getCorrespondingDebuggerScopeIndex(
   generatedRangeChain: GeneratedRange[],
   generatedRangeIndex: number
 ): number {
-  return generatedRangeChain.slice(0, generatedRangeIndex + 1).filter(scope => scope.kind !== "reference").length;
+  return generatedRangeChain.slice(0, generatedRangeIndex + 1).filter(range => range.isScope).length;
 }
 
 const numberRegex = /^\s*[+-]?(\d+|\d*\.\d+|\d+\.\d*)([Ee][+-]?\d+)?\s*$/;

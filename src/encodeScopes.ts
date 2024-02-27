@@ -62,8 +62,11 @@ export function encodeGeneratedRanges(generatedRange: GeneratedRange, originalSc
     if (item.kind === "start") {
       addSeparatorAndRelativeColumn(item.scope.start);
 
-      encodedScopes += encode(scopeKinds.indexOf(item.scope.kind) + 1);
-      encodedScopes += encode((item.scope.original ? 1 : 0) + (item.scope.original?.callsite ? 2 : 0));
+      encodedScopes += encode(
+        (item.scope.original ? 1 : 0) +
+        (item.scope.original?.callsite ? 2 : 0) +
+        (item.scope.isScope ? 4 : 0)
+      );
 
       if (item.scope.original) {
         const { sourceIndex, scopeIndex } = findOriginalScopeIndices(item.scope.original.scope, originalScopes);

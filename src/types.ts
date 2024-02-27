@@ -18,14 +18,12 @@ export interface BindingRange {
   expression?: string;
 }
 
-// use "reference" for scopes that only reference an original scope but
-// don't correspond to a scope in the generated code
-export type ScopeKind = "module" | "class" | "function" | "block" | "reference";
+export type ScopeKind = "module" | "class" | "function" | "block";
 
 export interface GeneratedRange {
   start: Location;
   end: Location;
-  kind: ScopeKind;
+  isScope: boolean;
   original?: {
     // this needs to be set for inlined functions
     callsite?: OriginalLocation;
@@ -39,7 +37,7 @@ export interface GeneratedRange {
 export interface OriginalScope {
   start: OriginalLocation;
   end: OriginalLocation;
-  kind: Exclude<ScopeKind, "reference">;
+  kind: ScopeKind;
   name?: string;
   variables?: string[];
   children?: OriginalScope[];

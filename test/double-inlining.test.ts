@@ -27,7 +27,7 @@ Generated source:
 
 const scopeNames = ["f", "g", "x", '"amet"', '"ipsum"'];
 const encodedOriginalScopes = ["AACAAC,AAECAE,EC,CAECCE,GC,E2C"];
-const encodedGeneratedRanges = ",ACCAADD,AKGAEAOAG,AKGADAHEI,2B;8B;2C";
+const encodedGeneratedRanges = ",AKAADD,AGAEAOAG,AGADAHEI,2B;8B;2C";
 const originalScopes: OriginalScope[] = [
   {
     start: { sourceIndex: 0, line: 0, column: 0 },
@@ -56,7 +56,7 @@ const originalScopes: OriginalScope[] = [
 const generatedRanges: GeneratedRange = {
   start: { line: 0, column: 0 },
   end: { line: 2, column: 43 },
-  kind: "module",
+  isScope: true,
   original: {
     scope: originalScopes[0],
     bindings: [undefined, undefined],
@@ -65,7 +65,7 @@ const generatedRanges: GeneratedRange = {
     {
       start: { line: 0, column: 0 },
       end: { line: 1, column: 30 },
-      kind: "reference",
+      isScope: false,
       original: {
         callsite: { sourceIndex: 0, line: 7, column: 0 },
         scope: originalScopes[0].children![1],
@@ -75,7 +75,7 @@ const generatedRanges: GeneratedRange = {
         {
           start: { line: 0, column: 0 },
           end: { line: 0, column: 27 },
-          kind: "reference",
+          isScope: false,
           original: {
             callsite: { sourceIndex: 0, line: 4, column: 2 },
             scope: originalScopes[0].children![0],

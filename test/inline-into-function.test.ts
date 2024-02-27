@@ -38,7 +38,7 @@ Generated source:
 
 const scopeNames = ["CALL_CHANCE", "log", "inner", "outer", "x", "shouldCall", "0.5", "c", "b"];
 const encodedOriginalScopes = ["AACAACEG,EgBECCI,EC,EkBECEI,EC,EkBECGIK,GkBIA,EG,CC,GY"];
-const encodedGeneratedRanges = ",ACCAAMDDD,aECAGOQ,yDKGADAcIO,AKGADAPEO,c,A,C,c";
+const encodedGeneratedRanges = ",AKAAMDDD,aKAGOQ,yDGADAcIO,AGADAPEO,c,A,C,c";
 const originalScopes: OriginalScope[] = [
   {
     start: { sourceIndex: 0, line: 0, column: 0 },
@@ -82,7 +82,7 @@ const originalScopes: OriginalScope[] = [
 const generatedRanges: GeneratedRange = {
   start: { line: 0, column: 0 },
   end: { line: 0, column: 99 },
-  kind: "module",
+  isScope: true,
   original: {
     scope: originalScopes[0],
     bindings: ["0.5", undefined, undefined, undefined],
@@ -91,7 +91,7 @@ const generatedRanges: GeneratedRange = {
     {
       start: { line: 0, column: 13 },
       end: { line: 0, column: 85 },
-      kind: "function",
+      isScope: true,
       original: {
         scope: originalScopes[0].children![2],
         bindings: ["c", "b"],
@@ -100,7 +100,7 @@ const generatedRanges: GeneratedRange = {
         {
           start: { line: 0, column: 70 },
           end: { line: 0, column: 84 },
-          kind: "reference",
+          isScope: false,
           original: {
             scope: originalScopes[0].children![1],
             bindings: ["c"],
@@ -110,7 +110,7 @@ const generatedRanges: GeneratedRange = {
             {
               start: { line: 0, column: 70 },
               end: { line: 0, column: 84 },
-              kind: "reference",
+              isScope: false,
               original: {
                 scope: originalScopes[0].children![0],
                 bindings: ["c"],

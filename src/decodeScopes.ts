@@ -26,7 +26,6 @@ function _decodeOriginalScopes(sourceIndex: number, items: number[][], names: st
     state.currentLine = startLine;
     const startColumn = startItem.shift()!;
     const kind = scopeKinds[startItem.shift()! - 1];
-    assert(kind !== "reference");
     const flags = startItem.shift()!;
     const hasName = !!(flags & 1);
     let name: string | undefined = undefined;
@@ -113,10 +112,10 @@ function _decodeGeneratedRanges(lineItems: LineItem[], names: string[], original
     const startColumn = startItem.item.shift()! + (startItem.line === state.currentLine ? state.currentColumn : 0);
     state.currentLine = startItem.line;
     state.currentColumn = startColumn;
-    const kind = scopeKinds[startItem.item.shift()! - 1];
     const flags = startItem.item.shift()!;
     const hasOriginal = !!(flags & 1);
     const hasCallsite = !!(flags & 2);
+    const isScope = !!(flags & 4);
 
     let original: GeneratedRange["original"] | undefined = undefined;
     let callsite: NonNullable<GeneratedRange["original"]>["callsite"] | undefined = undefined;
@@ -196,7 +195,7 @@ function _decodeGeneratedRanges(lineItems: LineItem[], names: string[], original
     const generatedRange: GeneratedRange = {
       start: { line: startItem.line, column: startColumn },
       end: { line: endItem.line, column: endColumn },
-      kind,
+      isScope,
     };
     if (original) {
       generatedRange.original = original;
