@@ -4,6 +4,7 @@ import { assert, getScopeItems, scopeKinds } from "./util";
 
 export function encodeOriginalScopes(originalScope: OriginalScope, names: string[]): string {
   let currentLine = 0;
+  let currentColumn = 0;
   const encodedItems: string[] = [];
 
   for (const item of getScopeItems(originalScope)) {
@@ -11,7 +12,7 @@ export function encodeOriginalScopes(originalScope: OriginalScope, names: string
 
     if (item.kind === "start") {
       encodedItem += encode(item.scope.start.line - currentLine);
-      encodedItem += encode(item.scope.start.column);
+      encodedItem += encode(item.scope.start.column - currentColumn);
       encodedItem += encode(scopeKinds.indexOf(item.scope.kind) + 1);
       encodedItem += encode((item.scope.name ? 1 : 0));
       if (item.scope.name) {
@@ -21,10 +22,12 @@ export function encodeOriginalScopes(originalScope: OriginalScope, names: string
         encodedItem += encode(getNameIndex(variableName, names));
       }
       currentLine = item.scope.start.line;
+      currentColumn = item.scope.start.column;
     } else {
       encodedItem += encode(item.scope.end.line - currentLine);
-      encodedItem += encode(item.scope.end.column);
+      encodedItem += encode(item.scope.end.column - currentColumn);
       currentLine = item.scope.end.line;
+      currentColumn = item.scope.end.column;
     }
 
     encodedItems.push(encodedItem);

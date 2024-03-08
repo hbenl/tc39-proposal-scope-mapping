@@ -32,7 +32,7 @@ Generated source:
 */
 
 const scopeNames = ["x", "x1", "x2"];
-const encodedOriginalScopes = ["AACA,AAIAA,GEIAA,GG,EC,AC"];
+const encodedOriginalScopes = ["AACA,AAIAA,GEIAA,GC,EF,AA"];
 const encodedGeneratedRanges = ",AKAA,AKACC;;;ECACE;kB;;C,A";
 const originalScopes: OriginalScope[] = [
   {

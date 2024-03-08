@@ -34,7 +34,7 @@ Generated source:
 */
 
 const scopeNames = ["outer", "inner", "num", "num_plus_one", "value", "value_plus_one", "f", "g", "a", "b"];
-const encodedOriginalScopes = ["AACAA,AAECACEG,CEECCIK,GG,GC,CS"];
+const encodedOriginalScopes = ["AACAA,AAECACEG,CEECCIK,GC,GF,CQ"];
 const encodedGeneratedRanges = ",AKAAM,AKACOQS;EKACQS;;;G;;;C;K";
 const originalScopes: OriginalScope[] = [
   {

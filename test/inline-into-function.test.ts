@@ -37,7 +37,7 @@ Generated source:
 */
 
 const scopeNames = ["CALL_CHANCE", "log", "inner", "outer", "x", "shouldCall", "0.5", "c", "b"];
-const encodedOriginalScopes = ["AACAACEG,EgBECCI,EC,EkBECEI,EC,EkBECGIK,GkBIA,EG,CC,GY"];
+const encodedOriginalScopes = ["AACAACEG,EgBECCI,Ef,EiBECEI,EjB,EiBECGIK,GAIA,Ef,CF,GW"];
 const encodedGeneratedRanges = ",AKAAMDDD,aKAGOQ,yDGADAcIO,AGADAPEO,c,A,C,c";
 const originalScopes: OriginalScope[] = [
   {

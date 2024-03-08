@@ -26,7 +26,7 @@ Generated source:
 */
 
 const scopeNames = ["f", "g", "x", '"amet"', '"ipsum"'];
-const encodedOriginalScopes = ["AACAAC,AAECAE,EC,CAECCE,GC,E2C"];
+const encodedOriginalScopes = ["AACAAC,AAECAE,EC,CDECCE,GC,E0C"];
 const encodedGeneratedRanges = ",AKAADD,AGAEAOAG,AGADAHEI,2B;8B;2C";
 const originalScopes: OriginalScope[] = [
   {
