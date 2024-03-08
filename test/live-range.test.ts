@@ -23,7 +23,7 @@ Generated source:
 */
 
 const scopeNames = ["log", "x", "msg", "\"foo\"", "\"bar\""];
-const encodedOriginalScopes = ["AACAAC,AkBECAE,EC,IO"];
+const encodedOriginalScopes = ["AACAAC,AkBECAE,EjB,IM"];
 const encodedGeneratedRanges = ",AKAADFGCAI,AGACAICG,mB;AGAAAEAI,mB,A";
 
 const originalScopes: OriginalScope[] = [

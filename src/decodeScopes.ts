@@ -6,7 +6,7 @@ import { assert } from "./util";
 export function decodeOriginalScopes(encodedScopes: string[], names: string[]): OriginalScope[] {
   return encodedScopes.map((encodedScope, sourceIndex) => {
     const items = encodedScope.split(",").map(decode);
-    const decoded = _decodeOriginalScopes(sourceIndex, items, names, { currentLine: 0 });
+    const decoded = _decodeOriginalScopes(sourceIndex, items, names, { currentLine: 0, currentColumn: 0 });
     assert(decoded.length === 1);
     return decoded[0];
   });
@@ -14,6 +14,7 @@ export function decodeOriginalScopes(encodedScopes: string[], names: string[]): 
 
 interface OriginalScopesDecodeState {
   currentLine: number;
+  currentColumn: number;
 }
 
 function _decodeOriginalScopes(sourceIndex: number, items: number[][], names: string[], state: OriginalScopesDecodeState): OriginalScope[] {
@@ -24,7 +25,8 @@ function _decodeOriginalScopes(sourceIndex: number, items: number[][], names: st
     assert(startItem && startItem.length > 3);
     const startLine = startItem.shift()! + state.currentLine;
     state.currentLine = startLine;
-    const startColumn = startItem.shift()!;
+    const startColumn = startItem.shift()! + state.currentColumn;
+    state.currentColumn = startColumn;
     const kind = scopeKinds[startItem.shift()! - 1];
     const flags = startItem.shift()!;
     const hasName = !!(flags & 1);
@@ -47,7 +49,8 @@ function _decodeOriginalScopes(sourceIndex: number, items: number[][], names: st
     assert(endItem && endItem.length === 2);
     const endLine = endItem.shift()! + state.currentLine;
     state.currentLine = endLine;
-    const endColumn = endItem.shift()!;
+    const endColumn = endItem.shift()! + state.currentColumn;
+    state.currentColumn = endColumn;
 
     const originalScope: OriginalScope = {
       start: { sourceIndex, line: startLine, column: startColumn },

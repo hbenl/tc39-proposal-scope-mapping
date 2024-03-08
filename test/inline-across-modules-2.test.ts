@@ -41,7 +41,7 @@ Original sources:
 */
 
 const scopeNames = ["MODULE_CONSTANT", "Logger", "log", "x", "inner", "outer", "\"module_constant\"", "42", "null"];
-const encodedOriginalScopes = ["AACAAC,GgBECEG,EG,CC", "AACACIK,EkBECIG,EC,EkBECKG,EC,GY"];
+const encodedOriginalScopes = ["AACAAC,GgBECEG,Eb,CF", "AACACIK,EkBECIG,EjB,EiBECKG,EjB,GW"];
 const encodedGeneratedRanges = ",AKCADDD,ACDAMD,AGCECUAO,AGADAHEO,AGDCAJEO,gB,A,A,A,ACADMD,AGCEAQAQ,AGADAJEQ,AGDCAJEQ,kB,A,A,A,A";
 const originalScopes: OriginalScope[] = [
   {
