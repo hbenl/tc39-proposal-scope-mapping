@@ -23,7 +23,7 @@ export function getOriginalFrames(
   return originalFrames;
 }
 
-function getOriginalFrame(
+export function getOriginalFrame(
   generatedLocation: Location,
   originalLocation: OriginalLocation,
   generatedRangeChain: GeneratedRange[],
@@ -76,7 +76,7 @@ function getOriginalFrame(
   };
 }
 
-function getGeneratedRangeChain(location: Location, generatedRange: GeneratedRange): GeneratedRange[] {
+export function getGeneratedRangeChain(location: Location, generatedRange: GeneratedRange): GeneratedRange[] {
   assert(isInRange(location, generatedRange));
   for (const childScope of generatedRange.children ?? []) {
     if (isInRange(location, childScope)) {
@@ -86,7 +86,7 @@ function getGeneratedRangeChain(location: Location, generatedRange: GeneratedRan
   return [generatedRange];
 }
 
-function getOriginalScopeChain(originalLocation: OriginalLocation, originalScope: OriginalScope): OriginalScope[] {
+export function getOriginalScopeChain(originalLocation: OriginalLocation, originalScope: OriginalScope): OriginalScope[] {
   assert(isInRange(originalLocation, originalScope));
   for (const childScope of originalScope.children ?? []) {
     if (isInRange(originalLocation, childScope)) {
@@ -96,7 +96,7 @@ function getOriginalScopeChain(originalLocation: OriginalLocation, originalScope
   return [originalScope];
 }
 
-function getCorrespondingDebuggerScopeIndex(
+export function getCorrespondingDebuggerScopeIndex(
   generatedRangeChain: GeneratedRange[],
   generatedRangeIndex: number
 ): number {
@@ -104,7 +104,7 @@ function getCorrespondingDebuggerScopeIndex(
 }
 
 const numberRegex = /^\s*[+-]?(\d+|\d*\.\d+|\d+\.\d*)([Ee][+-]?\d+)?\s*$/;
-function lookupScopeValue(expression: string, scopes: DebuggerScope[]): DebuggerValue {
+export function lookupScopeValue(expression: string, scopes: DebuggerScope[]): DebuggerValue {
   if (expression === "undefined") {
     return { value: undefined };
   }
