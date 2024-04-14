@@ -36,9 +36,9 @@ Generated source:
 ```
 */
 
-const scopeNames = ["CALL_CHANCE", "log", "inner", "outer", "x", "shouldCall", "0.5", "c", "b"];
+const scopeNames = ["CALL_CHANCE", "log", "inner", "outer", "x", "shouldCall", "0.5", "a", "c", "b"];
 const encodedOriginalScopes = ["AACAACEG,EgBECCI,EC,EkBECEI,EC,EkBECGIK,GkBIA,EG,CC,GY"];
-const encodedGeneratedRanges = ",AKAAMDDD,aKAGOQ,yDGADAcIO,AGADAPEO,c,A,C,c";
+const encodedGeneratedRanges = ",AKAAMDDO,aKAGQS,yDGADAcIQ,AGADAPEQ,c,A,C,c";
 const originalScopes: OriginalScope[] = [
   {
     start: { sourceIndex: 0, line: 0, column: 0 },
@@ -85,7 +85,7 @@ const generatedRanges: GeneratedRange = {
   isScope: true,
   original: {
     scope: originalScopes[0],
-    bindings: ["0.5", undefined, undefined, undefined],
+    bindings: ["0.5", undefined, undefined, "a"],
   },
   children: [
     {
@@ -208,7 +208,7 @@ test("original frames at column 71", () => {
           },
           {
             "value": {
-              "unavailable": true,
+              "objectId": 2,
             },
             "varname": "outer",
           },
@@ -266,7 +266,7 @@ test("original frames at column 71", () => {
           },
           {
             "value": {
-              "unavailable": true,
+              "objectId": 2,
             },
             "varname": "outer",
           },
@@ -324,7 +324,7 @@ test("original frames at column 71", () => {
           },
           {
             "value": {
-              "unavailable": true,
+              "objectId": 2,
             },
             "varname": "outer",
           },
