@@ -36,7 +36,7 @@ Original sources:
 
 const scopeNames = ["f", "num", "increment", "x", "o", "l", "e"];
 const encodedOriginalScopes = ["AACAAC,GmB", "AACAEA,CqBECAG,EC,AC"];
-const encodedGeneratedRanges = ",AKAADI,ACCAKD;;AGACAEAM;;qB;iB,A";
+const encodedGeneratedRanges = "AKAADI,ACCAKD;;AGACAEAM;;qB;iB,A";
 const originalScopes: OriginalScope[] = [
   {
     start: { sourceIndex: 0, line: 0, column: 0 },

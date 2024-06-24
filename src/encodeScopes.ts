@@ -122,7 +122,7 @@ export function encodeGeneratedRanges(generatedRange: GeneratedRange, originalSc
     }
   }
 
-  return encodedScopes;
+  return encodedScopes.slice(1);
 }
 
 function findOriginalScopeIndices(needle: OriginalScope, haystack: OriginalScope[]): { sourceIndex: number; scopeIndex: number; } {
