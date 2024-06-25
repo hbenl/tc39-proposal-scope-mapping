@@ -1,4 +1,4 @@
-import { GeneratedRange, Location, LocationRange, OriginalScope, ScopeKind } from "./types";
+import { GeneratedRange, Location, LocationRange, OriginalScope } from "./types";
 
 export function assert(condition: any): asserts condition {
   if (!condition) {
@@ -38,8 +38,6 @@ export function compareLocations(loc1: Location, loc2: Location) {
     return 0;
   }
 }
-
-export const scopeKinds: ScopeKind[] = ["module", "function", "class", "block"];
 
 export interface ScopeItem<T extends OriginalScope | GeneratedRange> {
   kind: "start" | "end";

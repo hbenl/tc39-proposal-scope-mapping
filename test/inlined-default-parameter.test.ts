@@ -24,9 +24,9 @@ Generated source:
 ```
 */
 
-const scopeNames = ["n", "f", "x", "y", "2", "1", "3"];
-const encodedOriginalScopes = ["AACAAC,EUECCEG,AkCICCA,IC,AC,EK"];
-const encodedGeneratedRanges = "AKAAID,AGACAQAKD,ACACM,YCADKD,c;e,A,A";
+const scopeNames = ["module", "n", "f", "function", "x", "y", "block", "2", "1", "3"];
+const encodedOriginalScopes = ["AAAACE,EUGCEIK,AkCMCEC,IC,AC,EK"];
+const encodedGeneratedRanges = "AKAAOD,AGACAQAQD,ACACS,YCADQD,c;e,A,A";
 
 const originalScopes: OriginalScope[] = [
   {

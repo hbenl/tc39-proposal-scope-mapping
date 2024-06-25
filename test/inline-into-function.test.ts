@@ -36,9 +36,9 @@ Generated source:
 ```
 */
 
-const scopeNames = ["CALL_CHANCE", "log", "inner", "outer", "x", "shouldCall", "0.5", "a", "c", "b"];
-const encodedOriginalScopes = ["AACAACEG,EgBECCI,EC,EkBECEI,EC,EkBECGIK,GkBIA,EG,CC,GY"];
-const encodedGeneratedRanges = "AKAAMDDO,aKAGQS,yDGADAcIQ,AGADAPEQ,c,A,C,c";
+const scopeNames = ["module", "CALL_CHANCE", "log", "inner", "outer", "function", "x", "shouldCall", "block", "0.5", "a", "c", "b"];
+const encodedOriginalScopes = ["AAAACEGI,EgBKCEM,EC,EkBKCGM,EC,EkBKCIMO,GkBQA,EG,CC,GY"];
+const encodedGeneratedRanges = "AKAASDDU,aKAGWY,yDGADAcIW,AGADAPEW,c,A,C,c";
 const originalScopes: OriginalScope[] = [
   {
     start: { sourceIndex: 0, line: 0, column: 0 },

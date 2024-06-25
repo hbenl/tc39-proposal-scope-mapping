@@ -18,8 +18,6 @@ export interface BindingRange {
   expression?: string;
 }
 
-export type ScopeKind = "module" | "class" | "function" | "block";
-
 export interface GeneratedRange {
   start: Location;
   end: Location;
@@ -37,7 +35,7 @@ export interface GeneratedRange {
 export interface OriginalScope {
   start: OriginalLocation;
   end: OriginalLocation;
-  kind: ScopeKind;
+  kind: string;
   name?: string;
   variables?: string[];
   children?: OriginalScope[];

@@ -33,9 +33,9 @@ Generated source:
 ```
 */
 
-const scopeNames = ["outer", "inner", "num", "num_plus_one", "value", "value_plus_one", "f", "g", "a", "b"];
-const encodedOriginalScopes = ["AACAA,AAECACEG,CEECCIK,GG,GC,CS"];
-const encodedGeneratedRanges = "AKAAM,AKACOQS;EKACQS;;;G;;;C;K";
+const scopeNames = ["module", "outer", "function", "inner", "num", "num_plus_one", "value", "value_plus_one", "f", "g", "a", "b"];
+const encodedOriginalScopes = ["AAAAC,AAECCGIK,CEECGMO,GG,GC,CS"];
+const encodedGeneratedRanges = "AKAAQ,AKACSUW;EKACUW;;;G;;;C;K";
 const originalScopes: OriginalScope[] = [
   {
     start: { sourceIndex: 0, line: 0, column: 0 },

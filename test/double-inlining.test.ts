@@ -25,9 +25,9 @@ Generated source:
 ```
 */
 
-const scopeNames = ["f", "g", "x", '"amet"', '"ipsum"'];
-const encodedOriginalScopes = ["AACAAC,AAECAE,EC,CAECCE,GC,E2C"];
-const encodedGeneratedRanges = "AKAADD,AGAEAOAG,AGADAHEI,2B;8B;2C";
+const scopeNames = ["module", "f", "g", "function", "x", '"amet"', '"ipsum"'];
+const encodedOriginalScopes = ["AAAACE,AAGCCI,EC,CAGCEI,GC,E2C"];
+const encodedGeneratedRanges = "AKAADD,AGAEAOAK,AGADAHEM,2B;8B;2C";
 const originalScopes: OriginalScope[] = [
   {
     start: { sourceIndex: 0, line: 0, column: 0 },

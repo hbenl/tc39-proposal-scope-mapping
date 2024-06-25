@@ -22,9 +22,9 @@ Generated source:
 ```
 */
 
-const scopeNames = ["log", "x", "msg", "\"foo\"", "\"bar\""];
-const encodedOriginalScopes = ["AACAAC,AkBECAE,EC,IO"];
-const encodedGeneratedRanges = "AKAADFGCAI,AGACAICG,mB;AGAAAEAI,mB,A";
+const scopeNames = ["module", "log", "x", "function", "msg", "\"foo\"", "\"bar\""];
+const encodedOriginalScopes = ["AAAACE,AkBGCCI,EC,IO"];
+const encodedGeneratedRanges = "AKAADFKCAM,AGACAICK,mB;AGAAAEAM,mB,A";
 
 const originalScopes: OriginalScope[] = [
   {

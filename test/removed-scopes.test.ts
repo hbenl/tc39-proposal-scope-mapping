@@ -31,9 +31,9 @@ Generated source:
 ```
 */
 
-const scopeNames = ["x", "x1", "x2"];
-const encodedOriginalScopes = ["AACA,AAIAA,GEIAA,GG,EC,AC"];
-const encodedGeneratedRanges = "AKAA,AKACC;;;ECACE;kB;;C,A";
+const scopeNames = ["module", "block", "x", "x1", "x2"];
+const encodedOriginalScopes = ["AAAA,AACAE,GECAE,GG,EC,AC"];
+const encodedGeneratedRanges = "AKAA,AKACG;;;ECACI;kB;;C,A";
 const originalScopes: OriginalScope[] = [
   {
     start: { sourceIndex: 0, line: 0, column: 0 },

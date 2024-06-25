@@ -1,6 +1,6 @@
 import { decode } from "vlq";
 import { GeneratedRange, OriginalScope, BindingRange } from "./types";
-import { getScopeItems, scopeKinds } from "./util";
+import { getScopeItems } from "./util";
 import { assert } from "./util";
 
 export function decodeOriginalScopes(encodedScopes: string[], names: string[]): OriginalScope[] {
@@ -25,7 +25,7 @@ function _decodeOriginalScopes(sourceIndex: number, items: number[][], names: st
     const startLine = startItem.shift()! + state.currentLine;
     state.currentLine = startLine;
     const startColumn = startItem.shift()!;
-    const kind = scopeKinds[startItem.shift()! - 1];
+    const kind = names[startItem.shift()!];
     const flags = startItem.shift()!;
     const hasName = !!(flags & 1);
     let name: string | undefined = undefined;

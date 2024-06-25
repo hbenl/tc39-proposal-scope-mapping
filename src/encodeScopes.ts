@@ -1,6 +1,6 @@
 import { encode } from "vlq";
 import { GeneratedRange, Location, OriginalScope } from "./types";
-import { assert, getScopeItems, scopeKinds } from "./util";
+import { assert, getScopeItems } from "./util";
 
 export function encodeOriginalScopes(originalScope: OriginalScope, names: string[]): string {
   let currentLine = 0;
@@ -12,7 +12,7 @@ export function encodeOriginalScopes(originalScope: OriginalScope, names: string
     if (item.kind === "start") {
       encodedItem += encode(item.scope.start.line - currentLine);
       encodedItem += encode(item.scope.start.column);
-      encodedItem += encode(scopeKinds.indexOf(item.scope.kind) + 1);
+      encodedItem += encode(getNameIndex(item.scope.kind, names));
       encodedItem += encode((item.scope.name ? 1 : 0));
       if (item.scope.name) {
         encodedItem += encode(getNameIndex(item.scope.name, names));

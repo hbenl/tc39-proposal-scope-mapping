@@ -34,9 +34,9 @@ Original sources:
 ```
 */
 
-const scopeNames = ["f", "num", "increment", "x", "o", "l", "e"];
-const encodedOriginalScopes = ["AACAAC,GmB", "AACAEA,CqBECAG,EC,AC"];
-const encodedGeneratedRanges = "AKAADI,ACCAKD;;AGACAEAM;;qB;iB,A";
+const scopeNames = ["module", "f", "num", "increment", "function", "x", "o", "l", "e"];
+const encodedOriginalScopes = ["AAAACE,GmB", "AAAAGC,CqBICCK,EC,AC"];
+const encodedGeneratedRanges = "AKAADM,ACCAOD;;AGACAEAQ;;qB;iB,A";
 const originalScopes: OriginalScope[] = [
   {
     start: { sourceIndex: 0, line: 0, column: 0 },

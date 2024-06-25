@@ -40,9 +40,9 @@ Original sources:
 ```
 */
 
-const scopeNames = ["MODULE_CONSTANT", "Logger", "log", "x", "inner", "outer", "\"module_constant\"", "42", "null"];
-const encodedOriginalScopes = ["AACAAC,GgBECEG,EG,CC", "AACACIK,EkBECIG,EC,EkBECKG,EC,GY"];
-const encodedGeneratedRanges = "AKCADDD,ACDAMD,AGCECUAO,AGADAHEO,AGDCAJEO,gB,A,A,A,ACADMD,AGCEAQAQ,AGADAJEQ,AGDCAJEQ,kB,A,A,A,A";
+const scopeNames = ["module", "MODULE_CONSTANT", "Logger", "function", "log", "x", "inner", "outer", "\"module_constant\"", "42", "null"];
+const encodedOriginalScopes = ["AAAACE,GgBGCIK,EG,CC", "AAAAEMO,EkBGCMK,EC,EkBGCOK,EC,GY"];
+const encodedGeneratedRanges = "AKCADDD,ACDAQD,AGCECUAS,AGADAHES,AGDCAJES,gB,A,A,A,ACADQD,AGCEAQAU,AGADAJEU,AGDCAJEU,kB,A,A,A,A";
 const originalScopes: OriginalScope[] = [
   {
     start: { sourceIndex: 0, line: 0, column: 0 },
