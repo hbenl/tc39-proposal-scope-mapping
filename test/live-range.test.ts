@@ -24,7 +24,7 @@ Generated source:
 
 const scopeNames = ["log", "x", "msg", "\"foo\"", "\"bar\""];
 const encodedOriginalScopes = ["AACAAC,AkBECAE,EC,IO"];
-const encodedGeneratedRanges = "AKAADFGCAI,AGACAICG,mB;AGAAAEAI,mB,A";
+const encodedGeneratedRanges = "AKAADGFCAI,AGACAICG,mB;AGAAAEAI,mB,A";
 
 const originalScopes: OriginalScope[] = [
   {
