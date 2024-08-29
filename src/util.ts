@@ -53,3 +53,29 @@ export function getScopeItems<T extends OriginalScope | GeneratedRange>(scope: T
     { kind: "end", scope },
   ]
 }
+
+export function collectGeneratedRangeParents(
+  generatedRange: GeneratedRange,
+  generatedRangeParents = new Map<GeneratedRange, GeneratedRange>()
+) {
+  for (const child of generatedRange.children ?? []) {
+    generatedRangeParents.set(child, generatedRange);
+    collectGeneratedRangeParents(child, generatedRangeParents);
+  }
+  return generatedRangeParents;
+}
+
+export function rangeKey({ start, end }: { start: Location, end: Location }): string {
+  return `${start.line}:${start.column}-${end.line}:${end.column}`;
+}
+
+export function collectGeneratedRangesByLocation(
+  generatedRange: GeneratedRange,
+  generatedRangesByLocation = new Map<string, GeneratedRange>()
+) {
+  generatedRangesByLocation.set(rangeKey(generatedRange), generatedRange);
+  for (const child of generatedRange.children ?? []) {
+    collectGeneratedRangesByLocation(child, generatedRangesByLocation);
+  }
+  return generatedRangesByLocation;
+}
