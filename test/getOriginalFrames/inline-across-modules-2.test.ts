@@ -1,7 +1,7 @@
-import { decodeGeneratedRanges, decodeOriginalScopes } from "../src/decodeScopes";
-import { encodeGeneratedRanges, encodeOriginalScopes } from "../src/encodeScopes";
-import { getOriginalFrames } from "../src/getOriginalFrames";
-import { DebuggerScope, GeneratedRange, OriginalScope } from "../src/types";
+import { decodeGeneratedRanges, decodeOriginalScopes } from "../../src/decodeScopes";
+import { encodeGeneratedRanges, encodeOriginalScopes } from "../../src/encodeScopes";
+import { getOriginalFrames } from "../../src/getOriginalFrames";
+import { DebuggerScope, GeneratedRange, OriginalScope } from "../../src/types";
 
 /**
 Taken from https://github.com/tc39/source-map-rfc/issues/61

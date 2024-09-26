@@ -1,59 +1,238 @@
-import { BindingRange, GeneratedRange, OriginalScope } from "./types";
-import { collectGeneratedRangeParents, collectGeneratedRangesByLocation, rangeKey } from "./util";
+import { EncodedSourceMap, TraceMap, eachMapping, originalPositionFor } from "@jridgewell/trace-mapping";
+import { BindingRange, GeneratedRange, Location, OriginalScope } from "./types";
+import { collectGeneratedRangeParents, collectGeneratedRangesByLocation, compareLocations, isBefore, isInRange, rangeKey } from "./util";
 
 export interface ScopeMap {
   originalScopes: OriginalScope[];
   generatedRanges: GeneratedRange;
 }
 
+interface MergedRange {
+  generatedRange: GeneratedRange;
+  intermediateGeneratedRange: GeneratedRange;
+  mergedGeneratedRange: GeneratedRange;
+}
+
 // Merges the ScopeMaps of two consecutive transpilation steps, i.e. an original
 // source was transpiled into an intermediate source which was then transpiled into
 // the final generated source.
-// scopeMap1 maps from the original to the intermediate source, scopeMap2 from the
-// intermediate to the generated source
-export function mergeScopeMaps(scopeMap1: ScopeMap, scopeMap2: ScopeMap): ScopeMap {
-  return {
-    originalScopes: scopeMap1.originalScopes,
-    generatedRanges: applyScopeMapToGeneratedRanges(
-      scopeMap2.generatedRanges,
-      collectGeneratedRangeParents(scopeMap2.generatedRanges),
-      collectGeneratedRangesByLocation(scopeMap1.generatedRanges)
-    ),
-  };
-}
+// sourceMap1 maps from the original to the intermediate source,
+// sourceMap2 from the intermediate to the generated source.
+// Current limitations:
+// - only one original source
+// - only simple binding expressions
+// - no binding ranges in sourceMap2
+export function mergeScopeMaps(
+  sourceMap1: EncodedSourceMap & ScopeMap,
+  sourceMap2: EncodedSourceMap & ScopeMap
+): ScopeMap {
+  // generatedRangeParents contains GeneratedRanges in the generated
+  // source which reference OriginalScopes in the intermediate source.
+  const generatedRangeParents = collectGeneratedRangeParents(sourceMap2.generatedRanges);
+  // intermediateGeneratedRangesByLocation contains GeneratedRanges in the intermediate
+  // source which reference OriginalScopes in the original source.
+  const intermediateGeneratedRangesByLocation = collectGeneratedRangesByLocation(sourceMap1.generatedRanges);
 
-// generatedRange and generatedRangeParents contain GeneratedRanges in the generated
-// source which reference OriginalScopes in the intermediate source.
-// intermediateGeneratedRangesByLocation contains GeneratedRanges in the intermediate
-// source which reference OriginalScopes in the original source.
-function applyScopeMapToGeneratedRanges(
-  generatedRange: GeneratedRange,
-  generatedRangeParents: Map<GeneratedRange, GeneratedRange>,
-  intermediateGeneratedRangesByLocation: Map<string, GeneratedRange>
-): GeneratedRange {
-  const { start, end, isScope } = generatedRange;
+  const traceMap1 = new TraceMap(sourceMap1);
+  const traceMap2 = new TraceMap(sourceMap2);
 
-  let original: GeneratedRange["original"] | undefined = undefined;
-  if (generatedRange.original) {
+  function applyScopeMapToGeneratedRange(
+    generatedRange: GeneratedRange,
+  ): MergedRange[] {
+    const { start, end, isScope } = generatedRange;
+
+    const mergedChildren = generatedRange.children?.flatMap(applyScopeMapToGeneratedRange) ?? [];
+
     // generatedRange.original is an original scope from the second scope map,
     // find the corresponding generated range from the first scope map
     const intermediateGeneratedRange = intermediateGeneratedRangesByLocation.get(rangeKey(generatedRange.original.scope));
 
-    if (intermediateGeneratedRange?.original) {
-      original = {
-        scope: intermediateGeneratedRange.original.scope,
-        bindings: intermediateGeneratedRange.original.bindings?.map(binding => 
-          applyScopeMapToBinding(binding, generatedRange, generatedRangeParents)
-        )
+    if (intermediateGeneratedRange) {
+      const { scope, bindings } = intermediateGeneratedRange.original;
+      let callsite = intermediateGeneratedRange.original.callsite;
+      if (generatedRange.original.callsite) {
+        const mappedCallsite = originalPositionFor(traceMap1, {
+          line: generatedRange.original.callsite.line + 1,
+          column: generatedRange.original.callsite.column,
+        });
+        if (mappedCallsite.source != null && mappedCallsite.line != null && mappedCallsite.column != null) {
+          //TODO sourceIndex!
+          callsite = { sourceIndex: 0, line: mappedCallsite.line - 1, column: mappedCallsite.column };
+        } else {
+          callsite = undefined;
+        }
+      }
+      const original: GeneratedRange["original"] = {
+        scope,
+        bindings: bindings?.map(binding => applyScopeMapToBinding(binding, generatedRange, generatedRangeParents)),
+        callsite,
       };
+
+      const mappedChildren: GeneratedRange[] = [];
+      for (const child of intermediateGeneratedRange.children ?? []) {
+        if (!mergedChildren.some(mergedChild => mergedChild.intermediateGeneratedRange === child)) {
+          const mappedChild = mapIntermediateGeneratedRange(child, generatedRange, mergedChildren);
+          if (mappedChild) {
+            mappedChildren.push(mappedChild);
+          }
+        }
+      }
+      sortByStartLocation(mappedChildren);
+
+      const children = generatedRangesUnion(
+        mappedChildren,
+        mergedChildren.map(({ mergedGeneratedRange }) => mergedGeneratedRange)
+      );
+
+      return [{
+        generatedRange,
+        intermediateGeneratedRange,
+        mergedGeneratedRange: { start, end, isScope, original, children },
+      }];
     }
+
+    return mergedChildren;
   }
 
-  const children = generatedRange.children?.map(
-    child => applyScopeMapToGeneratedRanges(child, generatedRangeParents, intermediateGeneratedRangesByLocation)
-  );
+  function mapIntermediateGeneratedRange(
+    intermediateGeneratedRange: GeneratedRange,
+    generatedRangeParent: GeneratedRange,
+    mergedGeneratedRanges: MergedRange[]
+  ): GeneratedRange | undefined {
+    const children: GeneratedRange[] = [];
+    for (const intermediateChild of intermediateGeneratedRange.children ?? []) {
+      let child = mergedGeneratedRanges.find(merged => 
+        merged.intermediateGeneratedRange === intermediateGeneratedRange && !merged.generatedRange.original.callsite
+      )?.mergedGeneratedRange;
+      if (!child) {
+        child = mapIntermediateGeneratedRange(intermediateChild, generatedRangeParent, mergedGeneratedRanges);
+      }
+      if (child) {
+        children.push(child);
+      }
+    }
 
-  return { start, end, isScope, original, children };
+    let inlinedRange = findInlinedRange(intermediateGeneratedRange, generatedRangeParent, traceMap2);
+    if (!inlinedRange) {
+      if (children.length === 0) {
+        return undefined;
+      }
+      inlinedRange = { start: children[0].start, end: children[0].end };
+    }
+    for (const child of children) {
+      if (isBefore(child.start, inlinedRange.start)) {
+        inlinedRange.start = child.start;
+      }
+      if (isBefore(inlinedRange.end, child.end)) {
+        inlinedRange.end = child.end;
+      }
+    }
+
+    return {
+      ...inlinedRange,
+      isScope: false,
+      children,
+      original: {
+        scope: intermediateGeneratedRange.original.scope,
+        bindings: intermediateGeneratedRange.original.bindings?.map(
+          binding => applyScopeMapToBinding(binding, generatedRangeParent, generatedRangeParents)
+        ),
+        callsite: intermediateGeneratedRange.original.callsite
+      }
+    };
+  }
+
+  return {
+    originalScopes: sourceMap1.originalScopes,
+    generatedRanges: applyScopeMapToGeneratedRange(sourceMap2.generatedRanges)[0].mergedGeneratedRange,
+  };
+}
+
+function findInlinedRange(
+  intermediateGeneratedRange: GeneratedRange,
+  generatedRangeParent: GeneratedRange,
+  tracemap: TraceMap
+) {
+  let start: Location | undefined;
+  let end: Location | undefined;
+  let finished = false;
+  eachMapping(tracemap, mapping => {
+    if (finished) {
+      return;
+    }
+    const { originalLine, originalColumn, generatedLine, generatedColumn } = mapping;
+    if (
+      originalLine != null &&
+      originalColumn != null &&
+      isInRange({ line: originalLine - 1, column: originalColumn }, intermediateGeneratedRange) &&
+      isInRange({ line: generatedLine - 1, column: generatedColumn }, generatedRangeParent)
+    ) {
+      end = {
+        line: mapping.generatedLine - 1,
+        column: mapping.generatedColumn,
+      };
+      if (!start) {
+        start = end;
+      }
+    } else {
+      if (start && end) {
+        finished = true;
+      }
+    }
+  });
+  if (start && end) {
+    return { start, end };
+  }
+}
+
+function sortByStartLocation(generatedRanges: GeneratedRange[]) {
+  generatedRanges.sort((range1, range2) => compareLocations(range1.start, range2.start));
+}
+
+function findNextGeneratedRange(location: Location, generatedRanges: GeneratedRange[]): GeneratedRange | undefined {
+  for (const generatedRange of generatedRanges) {
+    if (!isBefore(generatedRange.start, location)) {
+      return generatedRange;
+    }
+  }
+}
+
+function generatedRangesUnion(generatedRanges1: GeneratedRange[], generatedRanges2: GeneratedRange[]): GeneratedRange[] {
+  if (generatedRanges1.length === 0) {
+    return generatedRanges2;
+  }
+  if (generatedRanges2.length === 0) {
+    return generatedRanges1;
+  }
+  const union: GeneratedRange[] = [];
+  let location = isBefore(generatedRanges1[0].start, generatedRanges2[0].start) ?
+    generatedRanges1[0].start :
+    generatedRanges2[0].start;
+  while (true) {
+    const generatedRange1 = findNextGeneratedRange(location, generatedRanges1);
+    const generatedRange2 = findNextGeneratedRange(location, generatedRanges2);
+    if (!generatedRange1) {
+      if (generatedRange2) {
+        union.push(generatedRange2);
+        location = generatedRange2.end;
+      } else {
+        return union;
+      }
+    } else {
+      if (!generatedRange2) {
+        union.push(generatedRange1);
+        location = generatedRange1.end;
+      } else {
+        if (isBefore(generatedRange2.start, generatedRange1.start)) {
+          union.push(generatedRange2);
+          location = generatedRange2.end;
+        } else {
+          union.push(generatedRange1);
+          location = generatedRange1.end;
+        }
+      }
+    }
+  }
 }
 
 // Substitute original variables in binding expressions with their corresponding generated expressions

@@ -192,14 +192,13 @@ function _decodeGeneratedRanges(lineItems: LineItem[], names: string[], original
     state.currentLine = endItem.line;
     state.currentColumn = endColumn;
 
+    assert(original);
     const generatedRange: GeneratedRange = {
       start: { line: startItem.line, column: startColumn },
       end: { line: endItem.line, column: endColumn },
+      original,
       isScope,
     };
-    if (original) {
-      generatedRange.original = original;
-    }
     if (children.length > 0) {
       generatedRange.children = children;
     }

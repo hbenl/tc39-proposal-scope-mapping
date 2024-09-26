@@ -1,7 +1,7 @@
-import { decodeGeneratedRanges, decodeOriginalScopes } from "../src/decodeScopes";
-import { encodeGeneratedRanges, encodeOriginalScopes } from "../src/encodeScopes";
-import { getOriginalFrames } from "../src/getOriginalFrames";
-import { DebuggerScope, GeneratedRange, OriginalScope } from "../src/types";
+import { decodeGeneratedRanges, decodeOriginalScopes } from "../../src/decodeScopes";
+import { encodeGeneratedRanges, encodeOriginalScopes } from "../../src/encodeScopes";
+import { getOriginalFrames } from "../../src/getOriginalFrames";
+import { DebuggerScope, GeneratedRange, OriginalScope } from "../../src/types";
 
 /**
 Taken from https://szuend.github.io/scope-proposal-examples/04_inline_into_function/inline_into_function.html

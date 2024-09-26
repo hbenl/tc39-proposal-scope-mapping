@@ -1,90 +1,102 @@
-import { decodeGeneratedRanges, decodeOriginalScopes } from "../src/decodeScopes";
-import { encodeGeneratedRanges, encodeOriginalScopes } from "../src/encodeScopes";
-import { getOriginalFrames } from "../src/getOriginalFrames";
-import { DebuggerScope, GeneratedRange, OriginalScope } from "../src/types";
+import { decodeGeneratedRanges, decodeOriginalScopes } from "../../src/decodeScopes";
+import { encodeGeneratedRanges, encodeOriginalScopes } from "../../src/encodeScopes";
+import { getOriginalFrames } from "../../src/getOriginalFrames";
+import { DebuggerScope, GeneratedRange, OriginalScope } from "../../src/types";
 
-/**
+/*
 Original source:
 ```javascript
-0 function f(x) {
-1   console.log("Lorem " + x);
-2 }
-3 function g(x) {
-4   f("ipsum");
-5   console.log("dolor sit " + x);
+0 const n = 2;
+1
+2 function f(x, y = Math.max(x, n)) {
+3   const n = 3;
+4   console.log(y);
+5   console.log(n);
 6 }
-7 g("amet");
-8 console.log("consectetur adipiscing elit");
+7
+8 f(1);
 ```
 
 Generated source:
 ```javascript
-0 console.log("Lorem ipsum");
-1 console.log("dolor sit amet");
-2 console.log("consectetur adipiscing elit");
+0 console.log(Math.max(1, 2));
+1 console.log(3);
 ```
 */
 
-const scopeNames = ["module", "f", "g", "function", "x", '"amet"', '"ipsum"'];
-const encodedOriginalScopes = ["AAAACE,AAGCCI,EC,CAGCEI,GC,E2C"];
-const encodedGeneratedRanges = "AKAADD,AGAEAOAK,AGADAHEM,2B;8B;2C";
+const scopeNames = ["module", "n", "f", "function", "x", "y", "block", "2", "1", "3"];
+const encodedOriginalScopes = ["AAAACE,EUGCEIK,AkCMCEC,IC,AC,EK"];
+const encodedGeneratedRanges = "AKAAOD,AGACAQAQD,ACACS,YCADQD,c;e,A,A";
+
 const originalScopes: OriginalScope[] = [
   {
     start: { sourceIndex: 0, line: 0, column: 0 },
-    end: { sourceIndex: 0, line: 8, column: 43 },
+    end: { sourceIndex: 0, line: 8, column: 5 },
     kind: "module",
-    variables: ["f", "g"],
+    variables: ["n", "f"],
     children: [
       {
-        start: { sourceIndex: 0, line: 0, column: 0 },
-        end: { sourceIndex: 0, line: 2, column: 1 },
-        kind: "function",
-        name: "f",
-        variables: ["x"],
-      },
-      {
-        start: { sourceIndex: 0, line: 3, column: 0 },
+        start: { sourceIndex: 0, line: 2, column: 10 },
         end: { sourceIndex: 0, line: 6, column: 1 },
         kind: "function",
-        name: "g",
-        variables: ["x"],
-      }
-    ],
+        name: "f",
+        variables: ["x", "y"],
+        children: [
+          {
+            start: { sourceIndex: 0, line: 2, column: 34 },
+            end: { sourceIndex: 0, line: 6, column: 1 },
+            kind: "block",
+            name: "f",
+            variables: ["n"]
+          }
+        ]
+      },
+    ]
   }
 ];
 
 const generatedRanges: GeneratedRange = {
   start: { line: 0, column: 0 },
-  end: { line: 2, column: 43 },
+  end: { line: 1, column: 15 },
   isScope: true,
   original: {
     scope: originalScopes[0],
-    bindings: [undefined, undefined],
+    bindings: ["2", undefined]
   },
   children: [
     {
       start: { line: 0, column: 0 },
-      end: { line: 1, column: 30 },
+      end: { line: 1, column: 15 },
       isScope: false,
       original: {
-        callsite: { sourceIndex: 0, line: 7, column: 0 },
-        scope: originalScopes[0].children![1],
-        bindings: ['"amet"'],
+        callsite: { sourceIndex: 0, line: 8, column: 0 },
+        scope: originalScopes[0].children![0],
+        bindings: ["1", undefined],
       },
       children: [
         {
           start: { line: 0, column: 0 },
-          end: { line: 0, column: 27 },
+          end: { line: 1, column: 15 },
           isScope: false,
           original: {
-            callsite: { sourceIndex: 0, line: 4, column: 2 },
-            scope: originalScopes[0].children![0],
-            bindings: ['"ipsum"'],
+            scope: originalScopes[0].children![0].children![0],
+            bindings: ["3"],
           },
+          children: [
+            {
+              start: { line: 0, column: 12 },
+              end: { line: 0, column: 26 },
+              isScope: false,
+              original: {
+                scope: originalScopes[0].children![0],
+                bindings: ["1", undefined]
+              },
+            }
+          ]
         }
-      ],
+      ]
     }
-  ],
+  ]
 };
 
 test("decode scopes from sourcemap", () => {
@@ -101,7 +113,7 @@ test("encode scopes to sourcemap", () => {
   expect(names).toStrictEqual(scopeNames);
 });
 
-test("original scopes at line 1", () => {
+test("original frames at line 0, column 0", () => {
   const debuggerScopes: DebuggerScope[] = [
     {
       // The global scope, we only show one example binding
@@ -112,20 +124,20 @@ test("original scopes at line 1", () => {
     {
       // The module scope
       bindings: []
-    },
+    }
   ];
   expect(getOriginalFrames(
-    { line: 0, column: 0 },
-    { sourceIndex: 0, line: 1, column: 2 },
-    generatedRanges,
-    originalScopes,
-    debuggerScopes
-  )).toMatchInlineSnapshot(`
+  { line: 0, column: 0 },
+  { sourceIndex: 0, line: 4, column: 2 },
+  generatedRanges,
+  originalScopes,
+  debuggerScopes
+)).toMatchInlineSnapshot(`
 [
   {
     "location": {
       "column": 2,
-      "line": 1,
+      "line": 4,
       "sourceIndex": 0,
     },
     "name": "f",
@@ -144,61 +156,31 @@ test("original scopes at line 1", () => {
         "bindings": [
           {
             "value": {
-              "unavailable": true,
+              "value": 2,
             },
-            "varname": "f",
+            "varname": "n",
           },
-          {
-            "value": {
-              "unavailable": true,
-            },
-            "varname": "g",
-          },
-        ],
-      },
-      {
-        "bindings": [
-          {
-            "value": {
-              "value": "ipsum",
-            },
-            "varname": "x",
-          },
-        ],
-      },
-    ],
-  },
-  {
-    "location": {
-      "column": 2,
-      "line": 4,
-      "sourceIndex": 0,
-    },
-    "name": "g",
-    "scopes": [
-      {
-        "bindings": [
-          {
-            "value": {
-              "objectId": 1,
-            },
-            "varname": "document",
-          },
-        ],
-      },
-      {
-        "bindings": [
           {
             "value": {
               "unavailable": true,
             },
             "varname": "f",
           },
+        ],
+      },
+      {
+        "bindings": [
+          {
+            "value": {
+              "value": 1,
+            },
+            "varname": "x",
+          },
           {
             "value": {
               "unavailable": true,
             },
-            "varname": "g",
+            "varname": "y",
           },
         ],
       },
@@ -206,9 +188,9 @@ test("original scopes at line 1", () => {
         "bindings": [
           {
             "value": {
-              "value": "amet",
+              "value": 3,
             },
-            "varname": "x",
+            "varname": "n",
           },
         ],
       },
@@ -217,7 +199,7 @@ test("original scopes at line 1", () => {
   {
     "location": {
       "column": 0,
-      "line": 7,
+      "line": 8,
       "sourceIndex": 0,
     },
     "name": undefined,
@@ -236,15 +218,15 @@ test("original scopes at line 1", () => {
         "bindings": [
           {
             "value": {
-              "unavailable": true,
+              "value": 2,
             },
-            "varname": "f",
+            "varname": "n",
           },
           {
             "value": {
               "unavailable": true,
             },
-            "varname": "g",
+            "varname": "f",
           },
         ],
       },
@@ -254,7 +236,7 @@ test("original scopes at line 1", () => {
 `);
 });
 
-test("original scopes at line 2", () => {
+test("original frames at line 0, column 12", () => {
   const debuggerScopes: DebuggerScope[] = [
     {
       // The global scope, we only show one example binding
@@ -265,11 +247,11 @@ test("original scopes at line 2", () => {
     {
       // The module scope
       bindings: []
-    },
+    }
   ];
   expect(getOriginalFrames(
-    { line: 1, column: 0 },
-    { sourceIndex: 0, line: 5, column: 2 },
+    { line: 0, column: 12 },
+    { sourceIndex: 0, line: 2, column: 18 },
     generatedRanges,
     originalScopes,
     debuggerScopes
@@ -277,11 +259,11 @@ test("original scopes at line 2", () => {
 [
   {
     "location": {
-      "column": 2,
-      "line": 5,
+      "column": 18,
+      "line": 2,
       "sourceIndex": 0,
     },
-    "name": "g",
+    "name": "f",
     "scopes": [
       {
         "bindings": [
@@ -297,15 +279,15 @@ test("original scopes at line 2", () => {
         "bindings": [
           {
             "value": {
-              "unavailable": true,
+              "value": 2,
             },
-            "varname": "f",
+            "varname": "n",
           },
           {
             "value": {
               "unavailable": true,
             },
-            "varname": "g",
+            "varname": "f",
           },
         ],
       },
@@ -313,9 +295,15 @@ test("original scopes at line 2", () => {
         "bindings": [
           {
             "value": {
-              "value": "amet",
+              "value": 1,
             },
             "varname": "x",
+          },
+          {
+            "value": {
+              "unavailable": true,
+            },
+            "varname": "y",
           },
         ],
       },
@@ -324,7 +312,7 @@ test("original scopes at line 2", () => {
   {
     "location": {
       "column": 0,
-      "line": 7,
+      "line": 8,
       "sourceIndex": 0,
     },
     "name": undefined,
@@ -343,15 +331,15 @@ test("original scopes at line 2", () => {
         "bindings": [
           {
             "value": {
-              "unavailable": true,
+              "value": 2,
             },
-            "varname": "f",
+            "varname": "n",
           },
           {
             "value": {
               "unavailable": true,
             },
-            "varname": "g",
+            "varname": "f",
           },
         ],
       },

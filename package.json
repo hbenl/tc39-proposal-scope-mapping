@@ -1,6 +1,6 @@
 {
   "name": "tc39-proposal-scope-mapping",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "",
   "main": "lib/index.js",
   "files": [
@@ -23,6 +23,7 @@
     "typescript": "^5.2.2"
   },
   "dependencies": {
+    "@jridgewell/trace-mapping": "^0.3.25",
     "vlq": "^2.0.4"
   }
 }
