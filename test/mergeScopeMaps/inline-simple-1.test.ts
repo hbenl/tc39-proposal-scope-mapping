@@ -32,11 +32,13 @@ const originalScopes: OriginalScope[] = [
     start: { sourceIndex: 0, line: 0, column: 0 },
     end: { sourceIndex: 0, line: 5, column: 19 },
     kind: "module",
+    variables: ["f"],
     children: [
       {
         start: { sourceIndex: 0, line: 0, column: 0 },
         end: { sourceIndex: 0, line: 2, column: 1 },
         kind: "function",
+        name: "f",
         variables: ["x"],
       }
     ],
@@ -49,6 +51,7 @@ const intermediateGeneratedRanges: GeneratedRange = {
   isScope: true,
   original: {
     scope: originalScopes[0],
+    bindings: [undefined],
   },
   children: [
     {
@@ -107,8 +110,9 @@ test("merged scope map", () => {
   expect(mergedGeneratedRanges.start).toStrictEqual({ line: 0, column: 0 });
   expect(mergedGeneratedRanges.end).toStrictEqual({ line: 2, column: 19 });
   expect(mergedGeneratedRanges.original?.scope).toBe(originalScopes[0]);
-  expect(mergedGeneratedRanges.original?.bindings).toStrictEqual(undefined);
+  expect(mergedGeneratedRanges.original?.bindings).toStrictEqual([undefined]);
   expect(mergedGeneratedRanges.original?.callsite).toBe(undefined);
+  expect(mergedGeneratedRanges.children?.length).toBe(1);
 
   const childRange = mergedGeneratedRanges.children?.[0];
   expect(childRange?.start).toStrictEqual({ line: 1, column: 0 });
@@ -116,4 +120,5 @@ test("merged scope map", () => {
   expect(childRange?.original?.scope).toBe(originalScopes[0].children![0]);
   expect(childRange?.original?.bindings).toStrictEqual(['"bar"']);
   expect(childRange?.original?.callsite).toStrictEqual({ sourceIndex: 0, line: 4, column: 0});
+  expect(childRange?.children?.length).toBe(0);
 });

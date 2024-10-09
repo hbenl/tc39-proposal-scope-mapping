@@ -1,6 +1,6 @@
 import { EncodedSourceMap, TraceMap, eachMapping, originalPositionFor } from "@jridgewell/trace-mapping";
 import { BindingRange, GeneratedRange, Location, OriginalScope } from "./types";
-import { collectGeneratedRangeParents, collectGeneratedRangesByLocation, compareLocations, isBefore, isInRange, rangeKey } from "./util";
+import { assert, collectGeneratedRangeParents, collectGeneratedRangesByLocation, compareLocations, isBefore, isInRange, rangeKey } from "./util";
 
 export interface ScopeMap {
   originalScopes: OriginalScope[];
@@ -245,6 +245,8 @@ function applyScopeMapToBinding(
     return binding.map(bindingRange => {
       const { start, end, expression: originalExpression } = bindingRange;
       const expression = applyScopeMapToExpression(originalExpression, generatedRange, generatedRangeParents);
+      //TODO this isn't correct! handle undefined and BindingRange[]
+      assert(typeof expression === "string");
       return { start, end, expression };
     });
   }
@@ -256,16 +258,16 @@ function applyScopeMapToExpression(
   expression: string | undefined,
   generatedRange: GeneratedRange,
   generatedRangeParents: Map<GeneratedRange, GeneratedRange>
-): string | undefined {
+): string | undefined | BindingRange[] {
   if (expression === undefined) {
     return undefined;
   }
-  const substitutions = new Map<string, string>();
+  const substitutions = new Map<string, string | undefined | BindingRange[]>();
   for (const variable of getFreeVariables(expression)) {
     const binding = lookupBinding(variable, generatedRange, generatedRangeParents);
     // TODO check that the free variables in `expr` aren't shadowed
     if (binding) {
-      substitutions.set(variable, binding);
+      substitutions.set(variable, binding.value);
     }
   }
 
@@ -286,23 +288,26 @@ function getFreeVariables(expression: string): string[] {
   return [expression];
 }
 
-function substituteFreeVariables(expression: string, replacements: Map<string, string>): string {
-  return replacements.get(expression) ?? expression;
+function substituteFreeVariables(
+  expression: string,
+  substitutions: Map<string, string | undefined | BindingRange[]>
+): string | undefined | BindingRange[] {
+  return substitutions.has(expression) ? substitutions.get(expression) : expression;
 }
 
 function lookupBinding(
   expression: string,
   generatedRange: GeneratedRange,
   parentRanges: Map<GeneratedRange, GeneratedRange>
-): string | undefined {
+): { value: string | undefined | BindingRange[] } | undefined {
   if (["undefined", "null", "true", "false"].includes(expression)) {
-    return expression;
+    return { value: expression };
   }
   if (numberRegex.test(expression)) {
-    return expression;
+    return { value: expression };
   }
   if (expression.startsWith('"') && expression.endsWith('"')) {
-    return expression;
+    return { value: expression };
   }
   let current: GeneratedRange | undefined = generatedRange;
   while (current) {
@@ -311,10 +316,10 @@ function lookupBinding(
       if (typeof index === "number" && index >= 0) {
         const binding = current.original.bindings?.[index];
         if (typeof binding === "string") {
-          return binding;
+          return { value: binding };
         } else {
           // TODO handle binding ranges
-          return undefined;
+          return { value: undefined };
         }
       }
     }
