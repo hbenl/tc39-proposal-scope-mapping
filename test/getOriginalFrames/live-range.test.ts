@@ -28,14 +28,14 @@ const encodedGeneratedRanges = "AKAADFKCAM,AGACAICK,mB;AGAAAEAM,mB,A";
 
 const originalScopes: OriginalScope[] = [
   {
-    start: { sourceIndex: 0, line: 0, column: 0 },
-    end: { sourceIndex: 0, line: 6, column: 7 },
+    start: { line: 0, column: 0 },
+    end: { line: 6, column: 7 },
     kind: "module",
     variables: ["log", "x"],
     children: [
       {
-        start: { sourceIndex: 0, line: 0, column: 18 },
-        end: { sourceIndex: 0, line: 2, column: 1 },
+        start: { line: 0, column: 18 },
+        end: { line: 2, column: 1 },
         kind: "function",
         name: "log",
         variables: ["msg"],

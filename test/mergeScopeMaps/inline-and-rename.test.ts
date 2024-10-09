@@ -26,14 +26,14 @@ Generated source:
 
 const originalScopes: OriginalScope[] = [
   {
-    start: { sourceIndex: 0, line: 0, column: 0 },
-    end: { sourceIndex: 0, line: 4, column: 13 },
+    start: { line: 0, column: 0 },
+    end: { line: 4, column: 13 },
     kind: "module",
     variables: ["fun"],
     children: [
       {
-        start: { sourceIndex: 0, line: 0, column: 0 },
-        end: { sourceIndex: 0, line: 3, column: 1 },
+        start: { line: 0, column: 0 },
+        end: { line: 3, column: 1 },
         kind: "function",
         name: "fun",
         variables: ["x", "y"],
@@ -66,8 +66,8 @@ const intermediateGeneratedRanges: GeneratedRange = {
 
 const intermediateOriginalScopes: OriginalScope[] = [
   {
-    start: { sourceIndex: 0, line: 0, column: 0 },
-    end: { sourceIndex: 0, line: 2, column: 0 },
+    start: { line: 0, column: 0 },
+    end: { line: 2, column: 0 },
     kind: "module",
     variables: ["a"],
   }
@@ -104,7 +104,7 @@ const sourceMap2 = {
 };
 
 test("merged scope map", () => {
-  const { generatedRanges: mergedGeneratedRanges } = mergeScopeMaps(sourceMap1, sourceMap2);
+  const { generatedRanges: mergedGeneratedRanges } = mergeScopeMaps([sourceMap1], sourceMap2);
 
   expect(mergedGeneratedRanges.start).toStrictEqual({ line: 0, column: 0 });
   expect(mergedGeneratedRanges.end).toStrictEqual({ line: 2, column: 0 });

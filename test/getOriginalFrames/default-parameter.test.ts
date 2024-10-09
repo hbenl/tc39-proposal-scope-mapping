@@ -37,21 +37,21 @@ const encodedGeneratedRanges = "AKAAOQ;;UKACSU,wBKACO;;;;C,A;;K";
 
 const originalScopes: OriginalScope[] = [
   {
-    start: { sourceIndex: 0, line: 0, column: 0 },
-    end: { sourceIndex: 0, line: 8, column: 5 },
+    start: { line: 0, column: 0 },
+    end: { line: 8, column: 5 },
     kind: "module",
     variables: ["n", "f"],
     children: [
       {
-        start: { sourceIndex: 0, line: 2, column: 10 },
-        end: { sourceIndex: 0, line: 6, column: 1 },
+        start: { line: 2, column: 10 },
+        end: { line: 6, column: 1 },
         kind: "function",
         name: "f",
         variables: ["x", "y"],
         children: [
           {
-            start: { sourceIndex: 0, line: 2, column: 34 },
-            end: { sourceIndex: 0, line: 6, column: 1 },
+            start: { line: 2, column: 34 },
+            end: { line: 6, column: 1 },
             kind: "block",
             variables: ["n"]
           }

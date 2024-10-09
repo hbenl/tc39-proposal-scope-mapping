@@ -41,35 +41,35 @@ const encodedOriginalScopes = ["AAAACEGI,EgBKCEM,EC,EkBKCGM,EC,EkBKCIMO,GkBQA,EG
 const encodedGeneratedRanges = "AKAASDDU,aKAGWY,yDGADAcIW,AGADAPEW,c,A,C,c";
 const originalScopes: OriginalScope[] = [
   {
-    start: { sourceIndex: 0, line: 0, column: 0 },
-    end: { sourceIndex: 0, line: 19, column: 12 },
+    start: { line: 0, column: 0 },
+    end: { line: 19, column: 12 },
     kind: "module",
     variables: ["CALL_CHANCE", "log", "inner", "outer"],
     children: [
       {
-        start: { sourceIndex: 0, line: 2, column: 16 },
-        end: { sourceIndex: 0, line: 4, column: 1 },
+        start: { line: 2, column: 16 },
+        end: { line: 4, column: 1 },
         kind: "function",
         name: "log",
         variables: ["x"],
       },
       {
-        start: { sourceIndex: 0, line: 6, column: 18 },
-        end: { sourceIndex: 0, line: 8, column: 1 },
+        start: { line: 6, column: 18 },
+        end: { line: 8, column: 1 },
         kind: "function",
         name: "inner",
         variables: ["x"],
       },
       {
-        start: { sourceIndex: 0, line: 10, column: 18 },
-        end: { sourceIndex: 0, line: 16, column: 1 },
+        start: { line: 10, column: 18 },
+        end: { line: 16, column: 1 },
         kind: "function",
         name: "outer",
         variables: ["x", "shouldCall"],
         children: [
           {
-            start: { sourceIndex: 0, line: 13, column: 18 },
-            end: { sourceIndex: 0, line: 15, column: 3 },
+            start: { line: 13, column: 18 },
+            end: { line: 15, column: 3 },
             kind: "block",
             variables: [],
           }

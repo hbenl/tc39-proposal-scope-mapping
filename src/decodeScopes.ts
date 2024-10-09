@@ -4,9 +4,9 @@ import { getScopeItems } from "./util";
 import { assert } from "./util";
 
 export function decodeOriginalScopes(encodedScopes: string[], names: string[]): OriginalScope[] {
-  return encodedScopes.map((encodedScope, sourceIndex) => {
+  return encodedScopes.map(encodedScope => {
     const items = encodedScope.split(",").map(decode);
-    const decoded = _decodeOriginalScopes(sourceIndex, items, names, { currentLine: 0 });
+    const decoded = _decodeOriginalScopes(items, names, { currentLine: 0 });
     assert(decoded.length === 1);
     return decoded[0];
   });
@@ -16,7 +16,7 @@ interface OriginalScopesDecodeState {
   currentLine: number;
 }
 
-function _decodeOriginalScopes(sourceIndex: number, items: number[][], names: string[], state: OriginalScopesDecodeState): OriginalScope[] {
+function _decodeOriginalScopes(items: number[][], names: string[], state: OriginalScopesDecodeState): OriginalScope[] {
   const originalScopes: OriginalScope[] = [];
 
   while (items.length > 0 && getOriginalItemKind(items[0]) === "start") {
@@ -40,7 +40,7 @@ function _decodeOriginalScopes(sourceIndex: number, items: number[][], names: st
 
     let children: OriginalScope[] = [];
     if (getOriginalItemKind(items[0]) === "start") {
-      children = _decodeOriginalScopes(sourceIndex, items, names, state);
+      children = _decodeOriginalScopes(items, names, state);
     }
 
     const endItem = items.shift();
@@ -50,8 +50,8 @@ function _decodeOriginalScopes(sourceIndex: number, items: number[][], names: st
     const endColumn = endItem.shift()!;
 
     const originalScope: OriginalScope = {
-      start: { sourceIndex, line: startLine, column: startColumn },
-      end: { sourceIndex, line: endLine, column: endColumn },
+      start: { line: startLine, column: startColumn },
+      end: { line: endLine, column: endColumn },
       kind,
       variables,
     };
@@ -192,13 +192,14 @@ function _decodeGeneratedRanges(lineItems: LineItem[], names: string[], original
     state.currentLine = endItem.line;
     state.currentColumn = endColumn;
 
-    assert(original);
     const generatedRange: GeneratedRange = {
       start: { line: startItem.line, column: startColumn },
       end: { line: endItem.line, column: endColumn },
-      original,
       isScope,
     };
+    if (original) {
+      generatedRange.original = original;
+    }
     if (children.length > 0) {
       generatedRange.children = children;
     }

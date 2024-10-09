@@ -39,20 +39,20 @@ const encodedOriginalScopes = ["AAAACE,GmB", "AAAAGC,CqBICCK,EC,AC"];
 const encodedGeneratedRanges = "AKAADM,ACCAOD;;AGACAEAQ;;qB;iB,A";
 const originalScopes: OriginalScope[] = [
   {
-    start: { sourceIndex: 0, line: 0, column: 0 },
-    end: { sourceIndex: 0, line: 3, column: 19 },
+    start: { line: 0, column: 0 },
+    end: { line: 3, column: 19 },
     kind: "module",
     variables: ["f", "num"],
   },
   {
-    start: { sourceIndex: 1, line: 0, column: 0 },
-    end: { sourceIndex: 1, line: 3, column: 1 },
+    start: { line: 0, column: 0 },
+    end: { line: 3, column: 1 },
     kind: "module",
     variables: ["increment", "f"],
     children: [
       {
-        start: { sourceIndex: 1, line: 1, column: 21 },
-        end: { sourceIndex: 1, line: 3, column: 1 },
+        start: { line: 1, column: 21 },
+        end: { line: 3, column: 1 },
         kind: "function",
         name: "f",
         variables: ["x"],

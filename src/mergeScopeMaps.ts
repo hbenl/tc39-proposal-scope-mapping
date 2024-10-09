@@ -1,5 +1,5 @@
 import { EncodedSourceMap, TraceMap, eachMapping, originalPositionFor } from "@jridgewell/trace-mapping";
-import { BindingRange, GeneratedRange, Location, OriginalScope } from "./types";
+import { BindingRange, GeneratedRange, Location, OriginalLocation, OriginalScope } from "./types";
 import { assert, collectGeneratedRangeParents, collectGeneratedRangesByLocation, compareLocations, isBefore, isInRange, rangeKey } from "./util";
 
 export interface ScopeMap {
@@ -19,11 +19,10 @@ interface MergedRange {
 // sourceMap1 maps from the original to the intermediate source,
 // sourceMap2 from the intermediate to the generated source.
 // Current limitations:
-// - only one original source
 // - only simple binding expressions
 // - no binding ranges in sourceMap2
 export function mergeScopeMaps(
-  sourceMap1: EncodedSourceMap & ScopeMap,
+  sourceMaps1: (EncodedSourceMap & ScopeMap)[],
   sourceMap2: EncodedSourceMap & ScopeMap
 ): ScopeMap {
   // generatedRangeParents contains GeneratedRanges in the generated
@@ -31,81 +30,119 @@ export function mergeScopeMaps(
   const generatedRangeParents = collectGeneratedRangeParents(sourceMap2.generatedRanges);
   // intermediateGeneratedRangesByLocation contains GeneratedRanges in the intermediate
   // source which reference OriginalScopes in the original source.
-  const intermediateGeneratedRangesByLocation = collectGeneratedRangesByLocation(sourceMap1.generatedRanges);
+  const intermediateGeneratedRangesByLocation = sourceMaps1.map(
+    sourceMap => collectGeneratedRangesByLocation(sourceMap.generatedRanges)
+  );
 
-  const traceMap1 = new TraceMap(sourceMap1);
+  // sourceIndicesForOriginalScopes maps the OriginalScopes in the
+  // intermediate sources to their sourceIndices
+  const sourceIndicesForOriginalScopes = new Map<OriginalScope, number>();
+  sourceMap2.originalScopes.forEach((originalScope, sourceIndex) => {
+    function setSourceIndexForOriginalScope(originalScope: OriginalScope) {
+      sourceIndicesForOriginalScopes.set(originalScope, sourceIndex);
+      originalScope.children?.forEach(setSourceIndexForOriginalScope);
+    }
+    setSourceIndexForOriginalScope(originalScope);
+  });
+
+  const originalScopes: OriginalScope[] = [];
+  const originalSourceOffsets: number[] = [];
+  for (const sourceMap of sourceMaps1) {
+    originalSourceOffsets.push(originalScopes.length);
+    originalScopes.push(...sourceMap.originalScopes);
+  }
+
+  const traceMaps1 = sourceMaps1.map(sourceMap => new TraceMap(sourceMap));
   const traceMap2 = new TraceMap(sourceMap2);
 
   function applyScopeMapToGeneratedRange(
-    generatedRange: GeneratedRange,
+    generatedRange: GeneratedRange
   ): MergedRange[] {
     const { start, end, isScope } = generatedRange;
 
     const mergedChildren = generatedRange.children?.flatMap(applyScopeMapToGeneratedRange) ?? [];
 
+    if (!generatedRange.original) {
+      return mergedChildren;
+    }
+
     // generatedRange.original is an original scope from the second scope map,
     // find the corresponding generated range from the first scope map
-    const intermediateGeneratedRange = intermediateGeneratedRangesByLocation.get(rangeKey(generatedRange.original.scope));
+    const sourceIndex = sourceIndicesForOriginalScopes.get(generatedRange.original.scope)!;
+    const intermediateGeneratedRange = intermediateGeneratedRangesByLocation[sourceIndex]
+      .get(rangeKey(generatedRange.original.scope));
 
-    if (intermediateGeneratedRange) {
+    if (!intermediateGeneratedRange) {
+      return mergedChildren;
+    }
+
+    let original: GeneratedRange["original"] = undefined;
+    if (intermediateGeneratedRange.original) {
       const { scope, bindings } = intermediateGeneratedRange.original;
       let callsite = intermediateGeneratedRange.original.callsite;
       if (generatedRange.original.callsite) {
-        const mappedCallsite = originalPositionFor(traceMap1, {
+        const mappedCallsite = originalPositionFor(traceMaps1[sourceIndex], {
           line: generatedRange.original.callsite.line + 1,
           column: generatedRange.original.callsite.column,
         });
         if (mappedCallsite.source != null && mappedCallsite.line != null && mappedCallsite.column != null) {
-          //TODO sourceIndex!
-          callsite = { sourceIndex: 0, line: mappedCallsite.line - 1, column: mappedCallsite.column };
+          callsite = {
+            sourceIndex: sourceMaps1[sourceIndex].sources.indexOf(mappedCallsite.source) + originalSourceOffsets[sourceIndex],
+            line: mappedCallsite.line - 1,
+            column: mappedCallsite.column
+          };
         } else {
           callsite = undefined;
         }
       }
-      const original: GeneratedRange["original"] = {
+      original = {
         scope,
         bindings: bindings?.map(binding => applyScopeMapToBinding(binding, generatedRange, generatedRangeParents)),
         callsite,
       };
-
-      const mappedChildren: GeneratedRange[] = [];
-      for (const child of intermediateGeneratedRange.children ?? []) {
-        if (!mergedChildren.some(mergedChild => mergedChild.intermediateGeneratedRange === child)) {
-          const mappedChild = mapIntermediateGeneratedRange(child, generatedRange, mergedChildren);
-          if (mappedChild) {
-            mappedChildren.push(mappedChild);
-          }
-        }
-      }
-      sortByStartLocation(mappedChildren);
-
-      const children = generatedRangesUnion(
-        mappedChildren,
-        mergedChildren.map(({ mergedGeneratedRange }) => mergedGeneratedRange)
-      );
-
-      return [{
-        generatedRange,
-        intermediateGeneratedRange,
-        mergedGeneratedRange: { start, end, isScope, original, children },
-      }];
     }
 
-    return mergedChildren;
+    const mappedChildren: GeneratedRange[] = [];
+    for (const child of intermediateGeneratedRange.children ?? []) {
+      if (!mergedChildren.some(mergedChild => mergedChild.intermediateGeneratedRange === child)) {
+        const mappedChild = mapIntermediateGeneratedRange(child, sourceIndex, generatedRange, mergedChildren);
+        if (mappedChild) {
+          mappedChildren.push(mappedChild);
+        }
+      }
+    }
+    sortByStartLocation(mappedChildren);
+
+    const children = generatedRangesUnion(
+      mappedChildren,
+      mergedChildren.map(({ mergedGeneratedRange }) => mergedGeneratedRange)
+    );
+
+    return [{
+      generatedRange,
+      intermediateGeneratedRange,
+      mergedGeneratedRange: { start, end, isScope, original, children },
+    }];
   }
 
   function mapIntermediateGeneratedRange(
     intermediateGeneratedRange: GeneratedRange,
+    intermediateSourceIndex: number,
     generatedRangeParent: GeneratedRange,
     mergedGeneratedRanges: MergedRange[]
   ): GeneratedRange | undefined {
     const children: GeneratedRange[] = [];
     for (const intermediateChild of intermediateGeneratedRange.children ?? []) {
       let child = mergedGeneratedRanges.find(merged => 
-        merged.intermediateGeneratedRange === intermediateGeneratedRange && !merged.generatedRange.original.callsite
+        merged.intermediateGeneratedRange === intermediateGeneratedRange && !merged.generatedRange.original?.callsite
       )?.mergedGeneratedRange;
       if (!child) {
-        child = mapIntermediateGeneratedRange(intermediateChild, generatedRangeParent, mergedGeneratedRanges);
+        child = mapIntermediateGeneratedRange(
+          intermediateChild,
+          intermediateSourceIndex,
+          generatedRangeParent,
+          mergedGeneratedRanges
+        );
       }
       if (child) {
         children.push(child);
@@ -128,24 +165,43 @@ export function mergeScopeMaps(
       }
     }
 
-    return {
-      ...inlinedRange,
-      isScope: false,
-      children,
-      original: {
+    let original: GeneratedRange["original"] = undefined;
+    if (intermediateGeneratedRange.original) {
+      original = {
         scope: intermediateGeneratedRange.original.scope,
         bindings: intermediateGeneratedRange.original.bindings?.map(
           binding => applyScopeMapToBinding(binding, generatedRangeParent, generatedRangeParents)
         ),
-        callsite: intermediateGeneratedRange.original.callsite
+      };
+      const intermediateCallsite = intermediateGeneratedRange.original.callsite;
+      if (intermediateCallsite) {
+        original.callsite = {
+          ...intermediateCallsite,
+          sourceIndex: intermediateCallsite.sourceIndex + originalSourceOffsets[intermediateSourceIndex]
+        };
       }
+    }
+
+    return {
+      ...inlinedRange,
+      isScope: false,
+      children,
+      original,
     };
   }
 
-  return {
-    originalScopes: sourceMap1.originalScopes,
-    generatedRanges: applyScopeMapToGeneratedRange(sourceMap2.generatedRanges)[0].mergedGeneratedRange,
-  };
+  const mergedRanges = applyScopeMapToGeneratedRange(sourceMap2.generatedRanges);
+  let generatedRanges = mergedRanges[0].mergedGeneratedRange;
+  if (mergedRanges.length > 1) {
+    generatedRanges = {
+      start: mergedRanges[0].mergedGeneratedRange.start,
+      end: mergedRanges[mergedRanges.length - 1].mergedGeneratedRange.end,
+      isScope: false,
+      children: mergedRanges.map(mergedRange => mergedRange.mergedGeneratedRange),
+    }
+  }
+
+  return { originalScopes, generatedRanges };
 }
 
 function findInlinedRange(

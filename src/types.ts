@@ -22,7 +22,7 @@ export interface GeneratedRange {
   start: Location;
   end: Location;
   isScope: boolean;
-  original: {
+  original?: {
     // this needs to be set for inlined functions
     callsite?: OriginalLocation;
     scope: OriginalScope;
@@ -33,8 +33,8 @@ export interface GeneratedRange {
 }
 
 export interface OriginalScope {
-  start: OriginalLocation;
-  end: OriginalLocation;
+  start: Location;
+  end: Location;
   kind: string;
   name?: string;
   variables?: string[];

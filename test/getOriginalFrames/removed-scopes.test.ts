@@ -36,20 +36,20 @@ const encodedOriginalScopes = ["AAAA,AACAE,GECAE,GG,EC,AC"];
 const encodedGeneratedRanges = "AKAA,AKACG;;;ECACI;kB;;C,A";
 const originalScopes: OriginalScope[] = [
   {
-    start: { sourceIndex: 0, line: 0, column: 0 },
-    end: { sourceIndex: 0, line: 8, column: 1 },
+    start: { line: 0, column: 0 },
+    end: { line: 8, column: 1 },
     kind: "module",
     variables: [],
     children: [
       {
-        start: { sourceIndex: 0, line: 0, column: 0 },
-        end: { sourceIndex: 0, line: 8, column: 1 },
+        start: { line: 0, column: 0 },
+        end: { line: 8, column: 1 },
         variables: ["x"],
         kind: "block",
         children: [
           {
-            start: { sourceIndex: 0, line: 3, column: 2 },
-            end: { sourceIndex: 0, line: 6, column: 3 },
+            start: { line: 3, column: 2 },
+            end: { line: 6, column: 3 },
             kind: "block",
             variables: ["x"],
           }

@@ -45,14 +45,14 @@ const encodedOriginalScopes = ["AAAACE,GgBGCIK,EG,CC", "AAAAEMO,EkBGCMK,EC,EkBGC
 const encodedGeneratedRanges = "AKCADDD,ACDAQD,AGCECUAS,AGADAHES,AGDCAJES,gB,A,A,A,ACADQD,AGCEAQAU,AGADAJEU,AGDCAJEU,kB,A,A,A,A";
 const originalScopes: OriginalScope[] = [
   {
-    start: { sourceIndex: 0, line: 0, column: 0 },
-    end: { sourceIndex: 0, line: 6, column: 1 },
+    start: { line: 0, column: 0 },
+    end: { line: 6, column: 1 },
     kind: "module",
     variables: ["MODULE_CONSTANT", "Logger"],
     children: [
       {
-        start: { sourceIndex: 0, line: 3, column: 16 },
-        end: { sourceIndex: 0, line: 5, column: 3 },
+        start: { line: 3, column: 16 },
+        end: { line: 5, column: 3 },
         kind: "function",
         name: "log",
         variables: ["x"],
@@ -60,21 +60,21 @@ const originalScopes: OriginalScope[] = [
     ]
   },
   {
-    start: { sourceIndex: 1, line: 0, column: 0 },
-    end: { sourceIndex: 1, line: 11, column: 12 },
+    start: { line: 0, column: 0 },
+    end: { line: 11, column: 12 },
     kind: "module",
     variables: ["Logger", "inner", "outer"],
     children: [
       {
-        start: { sourceIndex: 1, line: 2, column: 18 },
-        end: { sourceIndex: 1, line: 4, column: 1 },
+        start: { line: 2, column: 18 },
+        end: { line: 4, column: 1 },
         kind: "function",
         name: "inner",
         variables: ["x"],
       },
       {
-        start: { sourceIndex: 1, line: 6, column: 18 },
-        end: { sourceIndex: 1, line: 8, column: 1 },
+        start: { line: 6, column: 18 },
+        end: { line: 8, column: 1 },
         kind: "function",
         name: "outer",
         variables: ["x"],
