@@ -133,8 +133,8 @@ export function mergeScopeMaps(
   ): GeneratedRange | undefined {
     const children: GeneratedRange[] = [];
     for (const intermediateChild of intermediateGeneratedRange.children ?? []) {
-      let child = mergedGeneratedRanges.find(merged => 
-        merged.intermediateGeneratedRange === intermediateGeneratedRange && !merged.generatedRange.original?.callsite
+      let child = mergedGeneratedRanges.find(merged =>
+        merged.intermediateGeneratedRange === intermediateChild
       )?.mergedGeneratedRange;
       if (!child) {
         child = mapIntermediateGeneratedRange(
@@ -277,18 +277,22 @@ function generatedRangesUnion(generatedRanges1: GeneratedRange[], generatedRange
     } else {
       if (!generatedRange2) {
         union.push(generatedRange1);
-        location = generatedRange1.end;
+        location = incrementLocation(generatedRange1.end);
       } else {
         if (isBefore(generatedRange2.start, generatedRange1.start)) {
           union.push(generatedRange2);
-          location = generatedRange2.end;
+          location = incrementLocation(generatedRange2.end);
         } else {
           union.push(generatedRange1);
-          location = generatedRange1.end;
+          location = incrementLocation(generatedRange1.end);
         }
       }
     }
   }
+}
+
+function incrementLocation(location: Location): Location {
+  return { line: location.line, column: location.column + 1 };
 }
 
 // Substitute original variables in binding expressions with their corresponding generated expressions
