@@ -11,6 +11,10 @@ export function findLastIndex<T>(array: T[], predicate: (value: T) => boolean): 
   return reverseIndex >= 0 ? (array.length - 1) - reverseIndex : -1;
 }
 
+export function isEqual(loc1: Location, loc2: Location) {
+  return loc1.line === loc2.line && loc1.column === loc2.column;
+}
+
 export function isBefore(loc1: Location, loc2: Location) {
   if (loc1.line < loc2.line) {
     return true;

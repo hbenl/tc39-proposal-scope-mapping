@@ -12,9 +12,12 @@ export interface OriginalLocation extends Location {
   sourceIndex: number;
 }
 
-export interface BindingRange {
+export interface Range {
   start: Location;
   end: Location;
+}
+
+export interface BindingRange extends Range {
   expression?: string;
 }
 

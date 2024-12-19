@@ -1,6 +1,6 @@
-import { EncodedSourceMap, TraceMap, eachMapping, originalPositionFor } from "@jridgewell/trace-mapping";
-import { BindingRange, GeneratedRange, Location, OriginalLocation, OriginalScope } from "./types";
-import { assert, collectGeneratedRangeParents, collectGeneratedRangesByLocation, compareLocations, isBefore, isInRange, rangeKey } from "./util";
+import { EncodedSourceMap, TraceMap, eachMapping, originalPositionFor, generatedPositionFor } from "@jridgewell/trace-mapping";
+import { BindingRange, GeneratedRange, Location, OriginalScope } from "./types";
+import { assert, collectGeneratedRangeParents, collectGeneratedRangesByLocation, compareLocations, isBefore, isEqual, isInRange, rangeKey } from "./util";
 
 export interface ScopeMap {
   originalScopes: OriginalScope[];
@@ -20,7 +20,6 @@ interface MergedRange {
 // sourceMap2 from the intermediate to the generated source.
 // Current limitations:
 // - only simple binding expressions
-// - no binding ranges in sourceMap2
 export function mergeScopeMaps(
   sourceMaps1: (EncodedSourceMap & ScopeMap)[],
   sourceMap2: EncodedSourceMap & ScopeMap
@@ -97,7 +96,13 @@ export function mergeScopeMaps(
       }
       original = {
         scope,
-        bindings: bindings?.map(binding => applyScopeMapToBinding(binding, generatedRange, generatedRangeParents)),
+        bindings: bindings?.map(binding => applyScopeMapToBinding(
+          binding,
+          generatedRange,
+          generatedRangeParents,
+          sourceMap2.sources[sourceIndex]!,
+          traceMap2
+        )),
         callsite,
       };
     }
@@ -170,7 +175,13 @@ export function mergeScopeMaps(
       original = {
         scope: intermediateGeneratedRange.original.scope,
         bindings: intermediateGeneratedRange.original.bindings?.map(
-          binding => applyScopeMapToBinding(binding, generatedRangeParent, generatedRangeParents)
+          binding => applyScopeMapToBinding(
+            binding,
+            generatedRangeParent,
+            generatedRangeParents,
+            sourceMap2.sources[intermediateSourceIndex]!,
+            traceMap2
+          )
         ),
       };
       const intermediateCallsite = intermediateGeneratedRange.original.callsite;
@@ -299,39 +310,124 @@ function incrementLocation(location: Location): Location {
 function applyScopeMapToBinding(
   binding: string | BindingRange[] | undefined,
   generatedRange: GeneratedRange,
-  generatedRangeParents: Map<GeneratedRange, GeneratedRange>
+  generatedRangeParents: Map<GeneratedRange, GeneratedRange>,
+  source: string,
+  traceMap: TraceMap
 ): string | BindingRange[] | undefined {
   if (Array.isArray(binding)) {
-    return binding.map(bindingRange => {
-      const { start, end, expression: originalExpression } = bindingRange;
-      const expression = applyScopeMapToExpression(originalExpression, generatedRange, generatedRangeParents);
-      //TODO this isn't correct! handle undefined and BindingRange[]
-      assert(typeof expression === "string");
-      return { start, end, expression };
+    return binding.flatMap(bindingRange => {
+      const { start: originalStart, end: originalEnd, expression: originalExpression } = bindingRange;
+
+      const start = generatedPositionFor(traceMap, { ...originalStart, source });
+      // TODO what if start/end couldn't be mapped?
+      assert(start.line && start.column);
+      const end = generatedPositionFor(traceMap, { ...originalEnd, source });
+      assert(end.line && end.column);
+
+      const binding = applyScopeMapToExpression(originalExpression, start, end, generatedRange, generatedRangeParents);
+      return Array.isArray(binding) ? binding : [{ start, end, expression: binding }];
     });
   }
 
-  return applyScopeMapToExpression(binding, generatedRange, generatedRangeParents);
+  return applyScopeMapToExpression(binding, generatedRange.start, generatedRange.end, generatedRange, generatedRangeParents);
 }
 
 function applyScopeMapToExpression(
   expression: string | undefined,
+  start: Location,
+  end: Location,
   generatedRange: GeneratedRange,
   generatedRangeParents: Map<GeneratedRange, GeneratedRange>
 ): string | undefined | BindingRange[] {
   if (expression === undefined) {
     return undefined;
   }
-  const substitutions = new Map<string, string | undefined | BindingRange[]>();
+  const substitutions = new Map<string, BindingRange[]>();
   for (const variable of getFreeVariables(expression)) {
     const binding = lookupBinding(variable, generatedRange, generatedRangeParents);
     // TODO check that the free variables in `expr` aren't shadowed
     if (binding) {
-      substitutions.set(variable, binding.value);
+      if (Array.isArray(binding.value)) {
+        substitutions.set(variable, binding.value);
+      } else {
+        substitutions.set(variable, [{ start, end, expression: binding.value }]);
+      }
     }
   }
 
-  return substituteFreeVariables(expression, substitutions);
+  const substitutionRanges = createSubstitutionRanges(start, end, substitutions);
+
+  const bindingRanges = substitutionRanges.map(substitutionRange => ({
+    start: substitutionRange.start,
+    end: substitutionRange.end,
+    expression: substituteFreeVariables(expression, substitutionRange.substitutions)
+  }));
+  mergeBindingRangesWithSameExpression(bindingRanges);
+
+  return bindingRanges.length === 1 ? bindingRanges[0].expression : bindingRanges;
+}
+
+function mergeBindingRangesWithSameExpression(bindingRanges: BindingRange[]): void {
+  let i = 0;
+  while (i < bindingRanges.length - 1) {
+    if (bindingRanges[i].expression === bindingRanges[i + 1].expression) {
+      bindingRanges.splice(i, 2, {
+        start: bindingRanges[i].start,
+        end: bindingRanges[i + 1].end,
+        expression: bindingRanges[i].expression
+      });
+    } else {
+      i++;
+    }
+  }
+}
+
+interface SubstitutionRange {
+  start: Location;
+  end: Location;
+  substitutions: Map<string, string | undefined>;
+}
+
+function createSubstitutionRanges(
+  start: Location,
+  end: Location,
+  substitutions: Map<string, BindingRange[]>
+): SubstitutionRange[] {
+  if (substitutions.size === 0) {
+    return [{ start, end, substitutions: new Map<string, string | undefined>() }];
+  }
+
+  const boundaries: Location[] = [...substitutions.values()]
+    .flat()
+    .flatMap(bindingRange => [bindingRange.start, bindingRange.end])
+    .filter(location => isBefore(start, location) && isBefore(location, end));
+  boundaries.push(start, end);
+  boundaries.sort(compareLocations);
+  removeDuplicateLocations(boundaries);
+
+  const result: SubstitutionRange[] = [];
+
+  for (let i = 0; i < boundaries.length - 1; i++) {
+    const substitutionsInThisRange = new Map<string, string | undefined>();
+    for (const key of substitutions.keys()) {
+      const bindingRange = substitutions.get(key)?.find(bindingRange => !isBefore(boundaries[i], bindingRange.start) && !isBefore(bindingRange.end, boundaries[i]));
+      substitutionsInThisRange.set(key, bindingRange?.expression);
+    }
+    result.push({ start: boundaries[i], end: boundaries[i + 1], substitutions: substitutionsInThisRange });
+  }  
+
+  return result;
+}
+
+function removeDuplicateLocations(locations: Location[]) {
+  let i = 0;
+  while (i < locations.length - 1) {
+    if (isEqual(locations[i], locations[i + 1])) {
+      locations.splice(i, 1);
+    } else {
+      i++;
+    }
+  }
 }
 
 // TODO the following functions only handle some simple expressions
@@ -350,8 +446,8 @@ function getFreeVariables(expression: string): string[] {
 
 function substituteFreeVariables(
   expression: string,
-  substitutions: Map<string, string | undefined | BindingRange[]>
-): string | undefined | BindingRange[] {
+  substitutions: Map<string, string | undefined>
+): string | undefined {
   return substitutions.has(expression) ? substitutions.get(expression) : expression;
 }
 
@@ -374,13 +470,7 @@ function lookupBinding(
     if (current.original) {
       const index = current.original.scope.variables?.findIndex(variable => expression === variable);
       if (typeof index === "number" && index >= 0) {
-        const binding = current.original.bindings?.[index];
-        if (typeof binding === "string") {
-          return { value: binding };
-        } else {
-          // TODO handle binding ranges
-          return { value: undefined };
-        }
+        return { value: current.original.bindings![index] };
       }
     }
     current = parentRanges.get(current);
