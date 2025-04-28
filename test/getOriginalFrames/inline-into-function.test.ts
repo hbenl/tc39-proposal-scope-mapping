@@ -1,7 +1,6 @@
-import { decodeGeneratedRanges, decodeOriginalScopes } from "../../src/decodeScopes";
-import { encodeGeneratedRanges, encodeOriginalScopes } from "../../src/encodeScopes";
 import { getOriginalFrames } from "../../src/getOriginalFrames";
-import { DebuggerScope, GeneratedRange, OriginalScope } from "../../src/types";
+import { OriginalScope, GeneratedRange, GeneratedDebuggerScope } from "../../src/types";
+import { decodeScopes, encodeScopes } from "../../src/util";
 
 /**
 Taken from https://szuend.github.io/scope-proposal-examples/04_inline_into_function/inline_into_function.html
@@ -37,33 +36,38 @@ Generated source:
 */
 
 const scopeNames = ["module", "CALL_CHANCE", "log", "inner", "outer", "function", "x", "shouldCall", "block", "0.5", "a", "c", "b"];
-const encodedOriginalScopes = ["AAAACEGI,EgBKCEM,EC,EkBKCGM,EC,EkBKCIMO,GkBQA,EG,CC,GY"];
-const encodedGeneratedRanges = "AKAASDDU,aKAGWY,yDGADAcIW,AGADAPEW,c,A,C,c";
+const encodedScopes = "BCAAA,DCCCC,BHCQEK,DE,CCB,BHCSCA,DA,CCB,BHCSCA,DAC,BCDSG,CCD,CBB,CDM,ECAA,GSDDU,EGNG,GWY,EC5BD,GW,IAOE,ECAD,GW,IAHC,FO,FA,FB,FO";
 const originalScopes: OriginalScope[] = [
   {
     start: { line: 0, column: 0 },
     end: { line: 19, column: 12 },
     kind: "module",
+    isStackFrame: false,
     variables: ["CALL_CHANCE", "log", "inner", "outer"],
     children: [
       {
         start: { line: 2, column: 16 },
         end: { line: 4, column: 1 },
         kind: "function",
+        isStackFrame: true,
         name: "log",
         variables: ["x"],
+        children: [],
       },
       {
         start: { line: 6, column: 18 },
         end: { line: 8, column: 1 },
         kind: "function",
+        isStackFrame: true,
         name: "inner",
         variables: ["x"],
+        children: [],
       },
       {
         start: { line: 10, column: 18 },
         end: { line: 16, column: 1 },
         kind: "function",
+        isStackFrame: true,
         name: "outer",
         variables: ["x", "shouldCall"],
         children: [
@@ -71,7 +75,9 @@ const originalScopes: OriginalScope[] = [
             start: { line: 13, column: 18 },
             end: { line: 15, column: 3 },
             kind: "block",
+            isStackFrame: false,
             variables: [],
+            children: [],
           }
         ]
       }
@@ -79,81 +85,82 @@ const originalScopes: OriginalScope[] = [
   }
 ];
 
-const generatedRanges: GeneratedRange = {
+const generatedRanges: GeneratedRange[] = [{
   start: { line: 0, column: 0 },
   end: { line: 0, column: 99 },
-  isScope: true,
-  original: {
-    scope: originalScopes[0],
-    bindings: ["0.5", undefined, undefined, "a"],
-  },
+  isStackFrame: false,
+  isHidden: false,
+  originalScope: originalScopes[0],
+  values: ["0.5", null, null, "a"],
   children: [
     {
       start: { line: 0, column: 13 },
       end: { line: 0, column: 85 },
-      isScope: true,
-      original: {
-        scope: originalScopes[0].children![2],
-        bindings: ["c", "b"],
-      },
+      isStackFrame: true,
+      isHidden: false,
+      originalScope: originalScopes[0].children![2],
+      values: ["c", "b"],
       children: [
         {
           start: { line: 0, column: 70 },
           end: { line: 0, column: 84 },
-          isScope: false,
-          original: {
-            scope: originalScopes[0].children![1],
-            bindings: ["c"],
-            callsite: { sourceIndex: 0, line: 14, column: 4 },
-          },
+          isStackFrame: false,
+          isHidden: false,
+          originalScope: originalScopes[0].children![1],
+          values: ["c"],
+          callSite: { sourceIndex: 0, line: 14, column: 4 },
           children: [
             {
               start: { line: 0, column: 70 },
               end: { line: 0, column: 84 },
-              isScope: false,
-              original: {
-                scope: originalScopes[0].children![0],
-                bindings: ["c"],
-                callsite: { sourceIndex: 0, line: 7, column: 2 },
-              },
+              isStackFrame: false,
+              isHidden: false,
+              originalScope: originalScopes[0].children![0],
+              values: ["c"],
+              callSite: { sourceIndex: 0, line: 7, column: 2 },
+              children: [],
             }
           ]
         }
       ]
     }
   ]
-};
+}];
 
 test("decode scopes from sourcemap", () => {
-  expect(decodeOriginalScopes(encodedOriginalScopes, scopeNames)).toStrictEqual(originalScopes);
-  expect(decodeGeneratedRanges(encodedGeneratedRanges, scopeNames, originalScopes)).toStrictEqual(generatedRanges);
+  const { scopes, ranges } = decodeScopes(encodedScopes, scopeNames);
+  expect(scopes).toStrictEqual(originalScopes);
+  expect(ranges).toStrictEqual(generatedRanges);
 });
 
 test("encode scopes to sourcemap", () => {
-  const names: string[] = [];
-  const encodedOriginal = originalScopes.map(scope => encodeOriginalScopes(scope, names));
-  const encodedGenerated = encodeGeneratedRanges(generatedRanges, originalScopes, names);
-  expect(encodedOriginal).toStrictEqual(encodedOriginalScopes);
-  expect(encodedGenerated).toStrictEqual(encodedGeneratedRanges);
+  const { scopes, names } = encodeScopes(originalScopes, generatedRanges);
+  expect(scopes).toStrictEqual(encodedScopes);
   expect(names).toStrictEqual(scopeNames);
 });
 
 test("original frames at column 71", () => {
-  const debuggerScopes: DebuggerScope[] = [
+  const debuggerScopes: GeneratedDebuggerScope[] = [
     {
       // The global scope, we only show one example binding
+      start: generatedRanges[0].start,
+      end: generatedRanges[0].end,
       bindings: [
         { varname: "document", value: { objectId: 1 }}
       ]
     },
     {
       // The module scope
+      start: generatedRanges[0].start,
+      end: generatedRanges[0].end,
       bindings: [
         { varname: "a", value: { objectId: 2 }}
       ]
     },
     {
       // The function scope
+      start: generatedRanges[0].children[0].start,
+      end: generatedRanges[0].children[0].end,
       bindings: [
         { varname: "c", value: { value: 42 } },
         { varname: "b", value: { value: true }},

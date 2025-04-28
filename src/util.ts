@@ -1,3 +1,4 @@
+const { encode, decode } = await import("@chrome-devtools/source-map-scopes-codec");
 import { GeneratedRange, Location, LocationRange, OriginalScope } from "./types";
 
 export function assert(condition: any): asserts condition {
@@ -82,4 +83,38 @@ export function collectGeneratedRangesByLocation(
     collectGeneratedRangesByLocation(child, generatedRangesByLocation);
   }
   return generatedRangesByLocation;
+}
+
+export function encodeScopes(scopes: OriginalScope[], ranges: GeneratedRange[]) {
+  return encode({ scopes, ranges });
+}
+
+export function decodeScopes(encodedScopes: string, names: string[]) {
+  let { scopes, ranges } = decode({ version: 3, sources: [], mappings: "", names, scopes: encodedScopes });
+  scopes = scopes.map(removeParentsFromScopes);
+  ranges = ranges.map(removeParentsFromRanges);
+  return { scopes, ranges };
+}
+
+function removeParentsFromScopes(scope: OriginalScope | null): OriginalScope | null {
+  if (scope === null) {
+    return null;
+  }
+  const { parent, children, ...rest } = scope;
+  return {
+    ...rest,
+    children: children.map(removeParentsFromScopes)
+  } as OriginalScope;
+}
+
+function removeParentsFromRanges(range: GeneratedRange): GeneratedRange {
+  const { parent, children, originalScope, ...rest } = range;
+  const result: GeneratedRange = {
+    ...rest,
+    children: children.map(removeParentsFromRanges),
+  };
+  if (originalScope) {
+    result.originalScope = removeParentsFromScopes(originalScope) as OriginalScope;
+  }
+  return result;
 }

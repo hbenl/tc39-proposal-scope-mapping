@@ -1,7 +1,6 @@
-import { decodeGeneratedRanges, decodeOriginalScopes } from "../../src/decodeScopes";
-import { encodeGeneratedRanges, encodeOriginalScopes } from "../../src/encodeScopes";
 import { getOriginalFrames } from "../../src/getOriginalFrames";
-import { DebuggerScope, GeneratedRange, OriginalScope } from "../../src/types";
+import { OriginalScope, GeneratedRange, GeneratedDebuggerScope } from "../../src/types";
+import { decodeScopes, encodeScopes } from "../../src/util";
 
 /**
 Taken from https://github.com/tc39/source-map-rfc/issues/61
@@ -40,22 +39,24 @@ Original sources:
 ```
 */
 
-const scopeNames = ["module", "MODULE_CONSTANT", "Logger", "function", "log", "x", "inner", "outer", "\"module_constant\"", "42", "null"];
-const encodedOriginalScopes = ["AAAACE,GgBGCIK,EG,CC", "AAAAEMO,EkBGCMK,EC,EkBGCOK,EC,GY"];
-const encodedGeneratedRanges = "AKCADDD,ACDAQD,AGCECUAS,AGADAHES,AGDCAJES,gB,A,A,A,ACADQD,AGCEAQAU,AGADAJEU,AGDCAJEU,kB,A,A,A,A";
+const scopeNames = ["module", "MODULE_CONSTANT", "Logger", "log", "function", "x", "inner", "outer", "\"module_constant\"", "42", "null"];
+const encodedScopes = "BCAAA,DCC,BHDQGI,DG,CCD,CBB,BCAAJ,DHIC,BHCSGI,DF,CCB,BHCSCA,DA,CCB,CDM,ECAE,GDDD,ECAF,GQD,ECAI,GS,IBKA,ECAD,GS,IBHC,ECAF,GS,IBDC,FQ,FA,FA,FA,ECAD,GQD,ECAI,GU,IBLA,ECAD,GU,IBHC,ECAF,GU,IBDC,FS,FA,FA,FA,FA";
 const originalScopes: OriginalScope[] = [
   {
     start: { line: 0, column: 0 },
     end: { line: 6, column: 1 },
     kind: "module",
+    isStackFrame: false,
     variables: ["MODULE_CONSTANT", "Logger"],
     children: [
       {
         start: { line: 3, column: 16 },
         end: { line: 5, column: 3 },
         kind: "function",
+        isStackFrame: true,
         name: "log",
         variables: ["x"],
+        children: [],
       }
     ]
   },
@@ -63,73 +64,74 @@ const originalScopes: OriginalScope[] = [
     start: { line: 0, column: 0 },
     end: { line: 11, column: 12 },
     kind: "module",
+    isStackFrame: false,
     variables: ["Logger", "inner", "outer"],
     children: [
       {
         start: { line: 2, column: 18 },
         end: { line: 4, column: 1 },
         kind: "function",
+        isStackFrame: true,
         name: "inner",
         variables: ["x"],
+        children: [],
       },
       {
         start: { line: 6, column: 18 },
         end: { line: 8, column: 1 },
         kind: "function",
+        isStackFrame: true,
         name: "outer",
         variables: ["x"],
+        children: [],
       }
     ]
   }
 ];
 
-const generatedRanges: GeneratedRange = {
+const generatedRanges: GeneratedRange[] = [{
   start: { line: 0, column: 0 },
   end: { line: 0, column: 34 },
-  isScope: true,
-  original: {
-    scope: originalScopes[1],
-    bindings: [undefined, undefined, undefined],
-  },
+  isStackFrame: false,
+  isHidden: false,
+  originalScope: originalScopes[1],
+  values: [null, null, null],
   children: [
     {
       start: { line: 0, column: 0 },
       end: { line: 0, column: 16 },
-      isScope: false,
-      original: {
-        scope: originalScopes[0],
-        bindings: ["\"module_constant\"", undefined],
-      },
+      isStackFrame: false,
+      isHidden: false,
+      originalScope: originalScopes[0],
+      values: ["\"module_constant\"", null],
       children: [
         {
           start: { line: 0, column: 0 },
           end: { line: 0, column: 16 },
-          isScope: false,
-          original: {
-            scope: originalScopes[1].children![1],
-            bindings: ["42"],
-            callsite: { sourceIndex: 1, line: 10, column: 0 },
-          },
+          isStackFrame: false,
+          isHidden: false,
+          originalScope: originalScopes[1].children![1],
+          values: ["42"],
+          callSite: { sourceIndex: 1, line: 10, column: 0 },
           children: [
             {
               start: { line: 0, column: 0 },
               end: { line: 0, column: 16 },
-              isScope: false,
-              original: {
-                scope: originalScopes[1].children![0],
-                bindings: ["42"],
-                callsite: { sourceIndex: 1, line: 7, column: 2 },
-              },
+              isStackFrame: false,
+              isHidden: false,
+              originalScope: originalScopes[1].children![0],
+              values: ["42"],
+              callSite: { sourceIndex: 1, line: 7, column: 2 },
               children: [
                 {
                   start: { line: 0, column: 0 },
                   end: { line: 0, column: 16 },
-                  isScope: false,
-                  original: {
-                    scope: originalScopes[0].children![0],
-                    bindings: ["42"],
-                    callsite: { sourceIndex: 1, line: 3, column: 2 },
-                  },
+                  isStackFrame: false,
+                  isHidden: false,
+                  originalScope: originalScopes[0].children![0],
+                  values: ["42"],
+                  callSite: { sourceIndex: 1, line: 3, column: 2 },
+                  children: [],
                 }
               ],
             }
@@ -140,41 +142,38 @@ const generatedRanges: GeneratedRange = {
     {
       start: { line: 0, column: 16 },
       end: { line: 0, column: 34 },
-      isScope: false,
-      original: {
-        scope: originalScopes[0],
-        bindings: ["\"module_constant\"", undefined],
-      },
+      isStackFrame: false,
+      isHidden: false,
+      originalScope: originalScopes[0],
+      values: ["\"module_constant\"", null],
       children: [
         {
           start: { line: 0, column: 16 },
           end: { line: 0, column: 34 },
-          isScope: false,
-          original: {
-            scope: originalScopes[1].children![1],
-            bindings: ["null"],
-            callsite: { sourceIndex: 1, line: 11, column: 0 },
-          },
+          isStackFrame: false,
+          isHidden: false,
+          originalScope: originalScopes[1].children![1],
+          values: ["null"],
+          callSite: { sourceIndex: 1, line: 11, column: 0 },
           children: [
             {
               start: { line: 0, column: 16 },
               end: { line: 0, column: 34 },
-              isScope: false,
-              original: {
-                scope: originalScopes[1].children![0],
-                bindings: ["null"],
-                callsite: { sourceIndex: 1, line: 7, column: 2 },
-              },
+              isStackFrame: false,
+              isHidden: false,
+              originalScope: originalScopes[1].children![0],
+              values: ["null"],
+              callSite: { sourceIndex: 1, line: 7, column: 2 },
               children: [
                 {
                   start: { line: 0, column: 16 },
                   end: { line: 0, column: 34 },
-                  isScope: false,
-                  original: {
-                    scope: originalScopes[0].children![0],
-                    bindings: ["null"],
-                    callsite: { sourceIndex: 1, line: 3, column: 2 },
-                  },
+                  isStackFrame: false,
+                  isHidden: false,
+                  originalScope: originalScopes[0].children![0],
+                  values: ["null"],
+                  callSite: { sourceIndex: 1, line: 3, column: 2 },
+                  children: [],
                 }
               ],
             }
@@ -183,32 +182,34 @@ const generatedRanges: GeneratedRange = {
       ],
     }
   ]
-};
+}];
 
 test("decode scopes from sourcemap", () => {
-  expect(decodeOriginalScopes(encodedOriginalScopes, scopeNames)).toStrictEqual(originalScopes);
-  expect(decodeGeneratedRanges(encodedGeneratedRanges, scopeNames, originalScopes)).toStrictEqual(generatedRanges);
+  const { scopes, ranges } = decodeScopes(encodedScopes, scopeNames);
+  expect(scopes).toStrictEqual(originalScopes);
+  expect(ranges).toStrictEqual(generatedRanges);
 });
 
 test("encode scopes to sourcemap", () => {
-  const names: string[] = [];
-  const encodedOriginal = originalScopes.map(scope => encodeOriginalScopes(scope, names));
-  const encodedGenerated = encodeGeneratedRanges(generatedRanges, originalScopes, names);
-  expect(encodedOriginal).toStrictEqual(encodedOriginalScopes);
-  expect(encodedGenerated).toStrictEqual(encodedGeneratedRanges);
+  const { scopes, names } = encodeScopes(originalScopes, generatedRanges);
+  expect(scopes).toStrictEqual(encodedScopes);
   expect(names).toStrictEqual(scopeNames);
 });
 
 test("original frames at column 1", () => {
-  const debuggerScopes: DebuggerScope[] = [
+  const debuggerScopes: GeneratedDebuggerScope[] = [
     {
       // The global scope, we only show one example binding
+      start: generatedRanges[0].start,
+      end: generatedRanges[0].end,
       bindings: [
         { varname: "document", value: { objectId: 1 }}
       ]
     },
     {
       // The module scope
+      start: generatedRanges[0].start,
+      end: generatedRanges[0].end,
       bindings: [
       ]
     },
@@ -418,15 +419,19 @@ test("original frames at column 1", () => {
 });
 
 test("original frames at column 18", () => {
-  const debuggerScopes: DebuggerScope[] = [
+  const debuggerScopes: GeneratedDebuggerScope[] = [
     {
       // The global scope, we only show one example binding
+      start: generatedRanges[0].start,
+      end: generatedRanges[0].end,
       bindings: [
         { varname: "document", value: { objectId: 1 }}
       ]
     },
     {
       // The module scope
+      start: generatedRanges[0].start,
+      end: generatedRanges[0].end,
       bindings: [
       ]
     },

@@ -36,19 +36,25 @@ const originalScopes: OriginalScope[] = [
     start: { line: 0, column: 0 },
     end: { line: 7, column: 19 },
     kind: "module",
+    isStackFrame: false,
     variables: ["f"],
     children: [
       {
         start: { line: 0, column: 0 },
         end: { line: 2, column: 1 },
         kind: "function",
+        isStackFrame: true,
         name: "f",
         variables: ["x"],
+        children: [],
       },
       {
         start: { line: 4, column: 0 },
         end: { line: 6, column: 1 },
         kind: "block",
+        isStackFrame: false,
+        variables: [],
+        children: [],
       }
     ],
   }
@@ -57,29 +63,28 @@ const originalScopes: OriginalScope[] = [
 const intermediateGeneratedRanges: GeneratedRange = {
   start: { line: 0, column: 0 },
   end: { line: 4, column: 19 },
-  isScope: true,
-  original: {
-    scope: originalScopes[0],
-    bindings: [undefined],
-  },
+  isStackFrame: false,
+  isHidden: false,
+  originalScope: originalScopes[0],
+  values: [null],
   children: [
     {
       start: { line: 1, column: 0 },
       end: { line: 3, column: 1 },
-      isScope: true,
-      original: {
-        scope: originalScopes[0].children![1],
-      },
+      isStackFrame: false,
+      isHidden: false,
+      originalScope: originalScopes[0].children![1],
+      values: [],
       children: [
         {
           start: { line: 2, column: 0 },
           end: { line: 2, column: 19 },
-          isScope: false,
-          original: {
-            scope: originalScopes[0].children![0],
-            callsite: { sourceIndex: 0, line: 5, column: 0 },
-            bindings: ['"bar"'],
-          },
+          isStackFrame: false,
+          isHidden: false,
+          originalScope: originalScopes[0].children![0],
+          callSite: { sourceIndex: 0, line: 5, column: 0 },
+          values: ['"bar"'],
+          children: [],
         }
       ]
     }
@@ -91,11 +96,16 @@ const intermediateOriginalScopes: OriginalScope[] = [
     start: { line: 0, column: 0 },
     end: { line: 4, column: 19 },
     kind: "module",
+    isStackFrame: false,
+    variables: [],
     children: [
       {
         start: { line: 1, column: 0 },
         end: { line: 3, column: 1 },
         kind: "block",
+        isStackFrame: false,
+        variables: [],
+        children: [],
       }
     ],
   }
@@ -104,18 +114,19 @@ const intermediateOriginalScopes: OriginalScope[] = [
 const generatedRanges: GeneratedRange = {
   start: { line: 0, column: 0 },
   end: { line: 2, column: 19 },
-  isScope: true,
-  original: {
-    scope: intermediateOriginalScopes[0],
-  },
+  isStackFrame: false,
+  isHidden: false,
+  originalScope: intermediateOriginalScopes[0],
+  values: [],
   children: [
     {
       start: { line: 1, column: 0 },
       end: { line: 1, column: 19 },
-      isScope: false,
-      original: {
-        scope: intermediateOriginalScopes[0].children![0],
-      },
+      isStackFrame: false,
+      isHidden: false,
+      originalScope: intermediateOriginalScopes[0].children![0],
+      values: [],
+      children: [],
     }
   ],
 };
@@ -145,24 +156,24 @@ test("merged scope map", () => {
 
   expect(mergedGeneratedRanges.start).toStrictEqual({ line: 0, column: 0 });
   expect(mergedGeneratedRanges.end).toStrictEqual({ line: 2, column: 19 });
-  expect(mergedGeneratedRanges.original?.scope).toBe(originalScopes[0]);
-  expect(mergedGeneratedRanges.original?.bindings).toStrictEqual([undefined]);
-  expect(mergedGeneratedRanges.original?.callsite).toBe(undefined);
+  expect(mergedGeneratedRanges.originalScope).toBe(originalScopes[0]);
+  expect(mergedGeneratedRanges.values).toStrictEqual([null]);
+  expect(mergedGeneratedRanges.callSite).toBe(undefined);
   expect(mergedGeneratedRanges.children?.length).toBe(1);
 
   const childRange = mergedGeneratedRanges.children?.[0];
   expect(childRange?.start).toStrictEqual({ line: 1, column: 0 });
   expect(childRange?.end).toStrictEqual({ line: 1, column: 19 });
-  expect(childRange?.original?.scope).toBe(originalScopes[0].children![1]);
-  expect(childRange?.original?.bindings).toStrictEqual(undefined);
-  expect(childRange?.original?.callsite).toStrictEqual(undefined);
+  expect(childRange?.originalScope).toBe(originalScopes[0].children![1]);
+  expect(childRange?.values).toStrictEqual([]);
+  expect(childRange?.callSite).toStrictEqual(undefined);
   expect(childRange?.children?.length).toBe(1);
 
   const grandchildRange = childRange?.children?.[0];
   expect(grandchildRange?.start).toStrictEqual({ line: 1, column: 0 });
   expect(grandchildRange?.end).toStrictEqual({ line: 1, column: 8 });
-  expect(grandchildRange?.original?.scope).toBe(originalScopes[0].children![0]);
-  expect(grandchildRange?.original?.bindings).toStrictEqual(['"bar"']);
-  expect(grandchildRange?.original?.callsite).toStrictEqual({ sourceIndex: 0, line: 5, column: 0 });
+  expect(grandchildRange?.originalScope).toBe(originalScopes[0].children![0]);
+  expect(grandchildRange?.values).toStrictEqual(['"bar"']);
+  expect(grandchildRange?.callSite).toStrictEqual({ sourceIndex: 0, line: 5, column: 0 });
   expect(grandchildRange?.children?.length).toBe(0);
 });

@@ -1,47 +1,11 @@
-export interface Location {
-  line: number;
-  column: number;
-}
+import type { OriginalScope, GeneratedRange, Position, OriginalPosition } from "@chrome-devtools/source-map-scopes-codec";
+export type { OriginalScope, GeneratedRange };
+export type Location = Position;
+export type OriginalLocation = OriginalPosition;
 
 export interface LocationRange {
   start: Location;
   end: Location;
-}
-
-export interface OriginalLocation extends Location {
-  sourceIndex: number;
-}
-
-export interface Range {
-  start: Location;
-  end: Location;
-}
-
-export interface BindingRange extends Range {
-  expression?: string;
-}
-
-export interface GeneratedRange {
-  start: Location;
-  end: Location;
-  isScope: boolean;
-  original?: {
-    // this needs to be set for inlined functions
-    callsite?: OriginalLocation;
-    scope: OriginalScope;
-    // this needs to have the same length as the referenced scope's variables
-    bindings?: (string | undefined | BindingRange[])[];
-  };
-  children?: GeneratedRange[];
-}
-
-export interface OriginalScope {
-  start: Location;
-  end: Location;
-  kind: string;
-  name?: string;
-  variables?: string[];
-  children?: OriginalScope[];
 }
 
 export interface PrimitiveDebuggerValue {
@@ -63,12 +27,18 @@ export interface DebuggerScopeBinding {
   value: DebuggerValue;
 }
 
-export interface DebuggerScope {
+export interface GeneratedDebuggerScope {
+  start: Location;
+  end: Location;
+  bindings: DebuggerScopeBinding[];
+}
+
+export interface OriginalDebuggerScope {
   bindings: DebuggerScopeBinding[];
 }
 
 export interface DebuggerFrame {
   name?: string;
   location: OriginalLocation;
-  scopes: DebuggerScope[];
+  scopes: OriginalDebuggerScope[];
 }

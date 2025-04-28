@@ -1,7 +1,6 @@
-import { decodeGeneratedRanges, decodeOriginalScopes } from "../../src/decodeScopes";
-import { encodeGeneratedRanges, encodeOriginalScopes } from "../../src/encodeScopes";
 import { getOriginalFrames } from "../../src/getOriginalFrames";
-import { DebuggerScope, GeneratedRange, OriginalScope } from "../../src/types";
+import { OriginalScope, GeneratedRange, GeneratedDebuggerScope } from "../../src/types";
+import { decodeScopes, encodeScopes } from "../../src/util";
 
 /**
 Original source:
@@ -26,91 +25,95 @@ Generated source:
 */
 
 const scopeNames = ["module", "f", "g", "function", "x", '"amet"', '"ipsum"'];
-const encodedOriginalScopes = ["AAAACE,AAGCCI,EC,CAGCEI,GC,E2C"];
-const encodedGeneratedRanges = "AKAADD,AGAEAOAK,AGADAHEM,2B;8B;2C";
+const encodedScopes = "BCAAA,DCC,BHAACG,DE,CCB,BHBACA,DA,CDB,CCrB,ECAA,GDD,ECAE,GK,IAHA,ECAD,GM,IAEC,Fb,FBe,FBrB";
 const originalScopes: OriginalScope[] = [
   {
     start: { line: 0, column: 0 },
     end: { line: 8, column: 43 },
     kind: "module",
+    isStackFrame: false,
     variables: ["f", "g"],
     children: [
       {
         start: { line: 0, column: 0 },
         end: { line: 2, column: 1 },
         kind: "function",
+        isStackFrame: true,
         name: "f",
         variables: ["x"],
+        children: [],
       },
       {
         start: { line: 3, column: 0 },
         end: { line: 6, column: 1 },
         kind: "function",
+        isStackFrame: true,
         name: "g",
         variables: ["x"],
+        children: [],
       }
     ],
   }
 ];
 
-const generatedRanges: GeneratedRange = {
+const generatedRanges: GeneratedRange[] = [{
   start: { line: 0, column: 0 },
   end: { line: 2, column: 43 },
-  isScope: true,
-  original: {
-    scope: originalScopes[0],
-    bindings: [undefined, undefined],
-  },
+  isStackFrame: false,
+  isHidden: false,
+  originalScope: originalScopes[0],
+  values: [null, null],
   children: [
     {
       start: { line: 0, column: 0 },
       end: { line: 1, column: 30 },
-      isScope: false,
-      original: {
-        callsite: { sourceIndex: 0, line: 7, column: 0 },
-        scope: originalScopes[0].children![1],
-        bindings: ['"amet"'],
-      },
+      isStackFrame: false,
+      isHidden: false,
+      originalScope: originalScopes[0].children![1],
+      callSite: { sourceIndex: 0, line: 7, column: 0 },
+      values: ['"amet"'],
       children: [
         {
           start: { line: 0, column: 0 },
           end: { line: 0, column: 27 },
-          isScope: false,
-          original: {
-            callsite: { sourceIndex: 0, line: 4, column: 2 },
-            scope: originalScopes[0].children![0],
-            bindings: ['"ipsum"'],
-          },
+          isStackFrame: false,
+          isHidden: false,
+          originalScope: originalScopes[0].children![0],
+          callSite: { sourceIndex: 0, line: 4, column: 2 },
+          values: ['"ipsum"'],
+          children: [],
         }
       ],
     }
   ],
-};
+}];
 
 test("decode scopes from sourcemap", () => {
-  expect(decodeOriginalScopes(encodedOriginalScopes, scopeNames)).toStrictEqual(originalScopes);
-  expect(decodeGeneratedRanges(encodedGeneratedRanges, scopeNames, originalScopes)).toStrictEqual(generatedRanges);
+  const { scopes, ranges } = decodeScopes(encodedScopes, scopeNames);
+  expect(scopes).toStrictEqual(originalScopes);
+  expect(ranges).toStrictEqual(generatedRanges);
 });
 
 test("encode scopes to sourcemap", () => {
-  const names: string[] = [];
-  const encodedOriginal = originalScopes.map(scope => encodeOriginalScopes(scope, names));
-  const encodedGenerated = encodeGeneratedRanges(generatedRanges, originalScopes, names);
-  expect(encodedOriginal).toStrictEqual(encodedOriginalScopes);
-  expect(encodedGenerated).toStrictEqual(encodedGeneratedRanges);
+  const { scopes, names } = encodeScopes(originalScopes, generatedRanges);
+  expect(scopes).toStrictEqual(encodedScopes);
   expect(names).toStrictEqual(scopeNames);
 });
 
 test("original scopes at line 1", () => {
-  const debuggerScopes: DebuggerScope[] = [
+  const debuggerScopes: GeneratedDebuggerScope[] = [
     {
       // The global scope, we only show one example binding
+      start: generatedRanges[0].start,
+      end: generatedRanges[0].end,
       bindings: [
         { varname: "document", value: { objectId: 1 }}
       ]
     },
     {
       // The module scope
+      start: generatedRanges[0].start,
+      end: generatedRanges[0].end,
       bindings: []
     },
   ];
@@ -255,15 +258,19 @@ test("original scopes at line 1", () => {
 });
 
 test("original scopes at line 2", () => {
-  const debuggerScopes: DebuggerScope[] = [
+  const debuggerScopes: GeneratedDebuggerScope[] = [
     {
       // The global scope, we only show one example binding
+      start: generatedRanges[0].start,
+      end: generatedRanges[0].end,
       bindings: [
         { varname: "document", value: { objectId: 1 }}
       ]
     },
     {
       // The module scope
+      start: generatedRanges[0].start,
+      end: generatedRanges[0].end,
       bindings: []
     },
   ];

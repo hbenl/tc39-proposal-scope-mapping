@@ -1,5 +1,6 @@
 import { EncodedSourceMap, TraceMap, eachMapping, originalPositionFor, generatedPositionFor } from "@jridgewell/trace-mapping";
-import { BindingRange, GeneratedRange, Location, OriginalScope } from "./types";
+import type { Binding, SubRangeBinding } from "@chrome-devtools/source-map-scopes-codec";
+import { GeneratedRange, Location, OriginalScope } from "./types";
 import { assert, collectGeneratedRangeParents, collectGeneratedRangesByLocation, compareLocations, isBefore, isEqual, isInRange, rangeKey } from "./util";
 
 export interface ScopeMap {
@@ -57,54 +58,51 @@ export function mergeScopeMaps(
   function applyScopeMapToGeneratedRange(
     generatedRange: GeneratedRange
   ): MergedRange[] {
-    const { start, end, isScope } = generatedRange;
+    const { start, end, isStackFrame, isHidden } = generatedRange;
 
     const mergedChildren = generatedRange.children?.flatMap(applyScopeMapToGeneratedRange) ?? [];
 
-    if (!generatedRange.original) {
+    if (!generatedRange.originalScope) {
       return mergedChildren;
     }
 
     // generatedRange.original is an original scope from the second scope map,
     // find the corresponding generated range from the first scope map
-    const sourceIndex = sourceIndicesForOriginalScopes.get(generatedRange.original.scope)!;
+    const sourceIndex = sourceIndicesForOriginalScopes.get(generatedRange.originalScope)!;
     const intermediateGeneratedRange = intermediateGeneratedRangesByLocation[sourceIndex]
-      .get(rangeKey(generatedRange.original.scope));
+      .get(rangeKey(generatedRange.originalScope));
 
     if (!intermediateGeneratedRange) {
       return mergedChildren;
     }
 
-    let original: GeneratedRange["original"] = undefined;
-    if (intermediateGeneratedRange.original) {
-      const { scope, bindings } = intermediateGeneratedRange.original;
-      let callsite = intermediateGeneratedRange.original.callsite;
-      if (generatedRange.original.callsite) {
+    let originalScope = intermediateGeneratedRange.originalScope;
+    let values: GeneratedRange["values"] = [];
+    let callSite: GeneratedRange["callSite"] = undefined;
+    if (originalScope) {
+      values = intermediateGeneratedRange.values.map(binding => applyScopeMapToBinding(
+        binding,
+        generatedRange,
+        generatedRangeParents,
+        sourceMap2.sources[sourceIndex]!,
+        traceMap2
+      ));
+      callSite = intermediateGeneratedRange.callSite;
+      if (generatedRange.callSite) {
         const mappedCallsite = originalPositionFor(traceMaps1[sourceIndex], {
-          line: generatedRange.original.callsite.line + 1,
-          column: generatedRange.original.callsite.column,
+          line: generatedRange.callSite.line + 1,
+          column: generatedRange.callSite.column,
         });
         if (mappedCallsite.source != null && mappedCallsite.line != null && mappedCallsite.column != null) {
-          callsite = {
+          callSite = {
             sourceIndex: sourceMaps1[sourceIndex].sources.indexOf(mappedCallsite.source) + originalSourceOffsets[sourceIndex],
             line: mappedCallsite.line - 1,
             column: mappedCallsite.column
           };
         } else {
-          callsite = undefined;
+          callSite = undefined;
         }
       }
-      original = {
-        scope,
-        bindings: bindings?.map(binding => applyScopeMapToBinding(
-          binding,
-          generatedRange,
-          generatedRangeParents,
-          sourceMap2.sources[sourceIndex]!,
-          traceMap2
-        )),
-        callsite,
-      };
     }
 
     const mappedChildren: GeneratedRange[] = [];
@@ -126,7 +124,7 @@ export function mergeScopeMaps(
     return [{
       generatedRange,
       intermediateGeneratedRange,
-      mergedGeneratedRange: { start, end, isScope, original, children },
+      mergedGeneratedRange: { start, end, isStackFrame, isHidden, originalScope, values, callSite, children },
     }];
   }
 
@@ -136,6 +134,7 @@ export function mergeScopeMaps(
     generatedRangeParent: GeneratedRange,
     mergedGeneratedRanges: MergedRange[]
   ): GeneratedRange | undefined {
+    const { isHidden } = intermediateGeneratedRange;
     const children: GeneratedRange[] = [];
     for (const intermediateChild of intermediateGeneratedRange.children ?? []) {
       let child = mergedGeneratedRanges.find(merged =>
@@ -170,23 +169,22 @@ export function mergeScopeMaps(
       }
     }
 
-    let original: GeneratedRange["original"] = undefined;
-    if (intermediateGeneratedRange.original) {
-      original = {
-        scope: intermediateGeneratedRange.original.scope,
-        bindings: intermediateGeneratedRange.original.bindings?.map(
-          binding => applyScopeMapToBinding(
-            binding,
-            generatedRangeParent,
-            generatedRangeParents,
-            sourceMap2.sources[intermediateSourceIndex]!,
-            traceMap2
-          )
-        ),
-      };
-      const intermediateCallsite = intermediateGeneratedRange.original.callsite;
+    let originalScope = intermediateGeneratedRange.originalScope;
+    let values: GeneratedRange["values"] = [];
+    let callSite: GeneratedRange["callSite"] = undefined;
+    if (originalScope) {
+      values = intermediateGeneratedRange.values.map(
+        binding => applyScopeMapToBinding(
+          binding,
+          generatedRangeParent,
+          generatedRangeParents,
+          sourceMap2.sources[intermediateSourceIndex]!,
+          traceMap2
+        )
+      );
+      const intermediateCallsite = intermediateGeneratedRange.callSite;
       if (intermediateCallsite) {
-        original.callsite = {
+        callSite = {
           ...intermediateCallsite,
           sourceIndex: intermediateCallsite.sourceIndex + originalSourceOffsets[intermediateSourceIndex]
         };
@@ -195,9 +193,12 @@ export function mergeScopeMaps(
 
     return {
       ...inlinedRange,
-      isScope: false,
       children,
-      original,
+      originalScope,
+      values,
+      callSite,
+      isStackFrame: false,
+      isHidden,
     };
   }
 
@@ -207,7 +208,9 @@ export function mergeScopeMaps(
     generatedRanges = {
       start: mergedRanges[0].mergedGeneratedRange.start,
       end: mergedRanges[mergedRanges.length - 1].mergedGeneratedRange.end,
-      isScope: false,
+      isStackFrame: false,
+      isHidden: false,
+      values: [],
       children: mergedRanges.map(mergedRange => mergedRange.mergedGeneratedRange),
     }
   }
@@ -308,15 +311,15 @@ function incrementLocation(location: Location): Location {
 
 // Substitute original variables in binding expressions with their corresponding generated expressions
 function applyScopeMapToBinding(
-  binding: string | BindingRange[] | undefined,
+  binding: Binding,
   generatedRange: GeneratedRange,
   generatedRangeParents: Map<GeneratedRange, GeneratedRange>,
   source: string,
   traceMap: TraceMap
-): string | BindingRange[] | undefined {
+): Binding {
   if (Array.isArray(binding)) {
     return binding.flatMap(bindingRange => {
-      const { start: originalStart, end: originalEnd, expression: originalExpression } = bindingRange;
+      const { from: originalStart, to: originalEnd, value: originalExpression } = bindingRange;
 
       const start = generatedPositionFor(traceMap, { ...originalStart, source });
       // TODO what if start/end couldn't be mapped?
@@ -324,8 +327,8 @@ function applyScopeMapToBinding(
       const end = generatedPositionFor(traceMap, { ...originalEnd, source });
       assert(end.line && end.column);
 
-      const binding = applyScopeMapToExpression(originalExpression, start, end, generatedRange, generatedRangeParents);
-      return Array.isArray(binding) ? binding : [{ start, end, expression: binding }];
+      const binding = applyScopeMapToExpression(originalExpression ?? null, start, end, generatedRange, generatedRangeParents);
+      return Array.isArray(binding) ? binding : [{ from: start, to: end, value: binding ?? undefined }];
     });
   }
 
@@ -333,16 +336,16 @@ function applyScopeMapToBinding(
 }
 
 function applyScopeMapToExpression(
-  expression: string | undefined,
+  expression: string | null,
   start: Location,
   end: Location,
   generatedRange: GeneratedRange,
   generatedRangeParents: Map<GeneratedRange, GeneratedRange>
-): string | undefined | BindingRange[] {
-  if (expression === undefined) {
-    return undefined;
+): Binding {
+  if (expression === null) {
+    return null;
   }
-  const substitutions = new Map<string, BindingRange[]>();
+  const substitutions = new Map<string, SubRangeBinding[]>();
   for (const variable of getFreeVariables(expression)) {
     const binding = lookupBinding(variable, generatedRange, generatedRangeParents);
     // TODO check that the free variables in `expr` aren't shadowed
@@ -350,7 +353,7 @@ function applyScopeMapToExpression(
       if (Array.isArray(binding.value)) {
         substitutions.set(variable, binding.value);
       } else {
-        substitutions.set(variable, [{ start, end, expression: binding.value }]);
+        substitutions.set(variable, [{ from: start, to: end, value: binding.value ?? undefined }]);
       }
     }
   }
@@ -358,23 +361,23 @@ function applyScopeMapToExpression(
   const substitutionRanges = createSubstitutionRanges(start, end, substitutions);
 
   const bindingRanges = substitutionRanges.map(substitutionRange => ({
-    start: substitutionRange.start,
-    end: substitutionRange.end,
-    expression: substituteFreeVariables(expression, substitutionRange.substitutions)
+    from: substitutionRange.start,
+    to: substitutionRange.end,
+    value: substituteFreeVariables(expression, substitutionRange.substitutions)
   }));
   mergeBindingRangesWithSameExpression(bindingRanges);
 
-  return bindingRanges.length === 1 ? bindingRanges[0].expression : bindingRanges;
+  return bindingRanges.length === 1 ? bindingRanges[0].value ?? null : bindingRanges;
 }
 
-function mergeBindingRangesWithSameExpression(bindingRanges: BindingRange[]): void {
+function mergeBindingRangesWithSameExpression(bindingRanges: SubRangeBinding[]): void {
   let i = 0;
   while (i < bindingRanges.length - 1) {
-    if (bindingRanges[i].expression === bindingRanges[i + 1].expression) {
+    if (bindingRanges[i].value === bindingRanges[i + 1].value) {
       bindingRanges.splice(i, 2, {
-        start: bindingRanges[i].start,
-        end: bindingRanges[i + 1].end,
-        expression: bindingRanges[i].expression
+        from: bindingRanges[i].from,
+        to: bindingRanges[i + 1].to,
+        value: bindingRanges[i].value
       });
     } else {
       i++;
@@ -391,7 +394,7 @@ interface SubstitutionRange {
 function createSubstitutionRanges(
   start: Location,
   end: Location,
-  substitutions: Map<string, BindingRange[]>
+  substitutions: Map<string, SubRangeBinding[]>
 ): SubstitutionRange[] {
   if (substitutions.size === 0) {
     return [{ start, end, substitutions: new Map<string, string | undefined>() }];
@@ -399,7 +402,7 @@ function createSubstitutionRanges(
 
   const boundaries: Location[] = [...substitutions.values()]
     .flat()
-    .flatMap(bindingRange => [bindingRange.start, bindingRange.end])
+    .flatMap(bindingRange => [bindingRange.from, bindingRange.to])
     .filter(location => isBefore(start, location) && isBefore(location, end));
   boundaries.push(start, end);
   boundaries.sort(compareLocations);
@@ -410,8 +413,8 @@ function createSubstitutionRanges(
   for (let i = 0; i < boundaries.length - 1; i++) {
     const substitutionsInThisRange = new Map<string, string | undefined>();
     for (const key of substitutions.keys()) {
-      const bindingRange = substitutions.get(key)?.find(bindingRange => !isBefore(boundaries[i], bindingRange.start) && !isBefore(bindingRange.end, boundaries[i]));
-      substitutionsInThisRange.set(key, bindingRange?.expression);
+      const bindingRange = substitutions.get(key)?.find(bindingRange => !isBefore(boundaries[i], bindingRange.from) && !isBefore(bindingRange.to, boundaries[i]));
+      substitutionsInThisRange.set(key, bindingRange?.value);
     }
     result.push({ start: boundaries[i], end: boundaries[i + 1], substitutions: substitutionsInThisRange });
   }  
@@ -455,7 +458,7 @@ function lookupBinding(
   expression: string,
   generatedRange: GeneratedRange,
   parentRanges: Map<GeneratedRange, GeneratedRange>
-): { value: string | undefined | BindingRange[] } | undefined {
+): { value: Binding } | undefined {
   if (["undefined", "null", "true", "false"].includes(expression)) {
     return { value: expression };
   }
@@ -467,10 +470,10 @@ function lookupBinding(
   }
   let current: GeneratedRange | undefined = generatedRange;
   while (current) {
-    if (current.original) {
-      const index = current.original.scope.variables?.findIndex(variable => expression === variable);
+    if (current.originalScope) {
+      const index = current.originalScope.variables?.findIndex(variable => expression === variable);
       if (typeof index === "number" && index >= 0) {
-        return { value: current.original.bindings![index] };
+        return { value: current.values![index] };
       }
     }
     current = parentRanges.get(current);

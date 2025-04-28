@@ -1,7 +1,6 @@
-import { decodeGeneratedRanges, decodeOriginalScopes } from "../../src/decodeScopes";
-import { encodeGeneratedRanges, encodeOriginalScopes } from "../../src/encodeScopes";
 import { getOriginalFrames } from "../../src/getOriginalFrames";
-import { DebuggerScope, GeneratedRange, OriginalScope } from "../../src/types";
+import { OriginalScope, GeneratedRange, GeneratedDebuggerScope } from "../../src/types";
+import { decodeScopes, encodeScopes } from "../../src/util";
 
 /**
 Taken from https://github.com/tc39/source-map-rfc/issues/37#issuecomment-1699356967
@@ -34,19 +33,20 @@ Generated source:
 */
 
 const scopeNames = ["module", "outer", "function", "inner", "num", "num_plus_one", "value", "value_plus_one", "f", "g", "a", "b"];
-const encodedOriginalScopes = ["AAAAC,AAECCGIK,CEECGMO,GG,GC,CS"];
-const encodedGeneratedRanges = "AKAAQ,AKACSUW;EKACUW;;;G;;;C;K";
+const encodedScopes = "BCAAA,DC,BHAACE,DECC,BHBCEA,DCC,CDD,CDB,CBJ,ECAA,GQ,EGAC,GSUW,EHBCC,GUW,FDD,FDB,FBF";
 const originalScopes: OriginalScope[] = [
   {
     start: { line: 0, column: 0 },
     end: { line: 8, column: 9 },
     kind: "module",
+    isStackFrame: false,
     variables: ["outer"],
     children: [
       {
         start: { line: 0, column: 0 },
         end: { line: 7, column: 1 },
         kind: "function",
+        isStackFrame: true,
         name: "outer",
         variables: ["inner", "num", "num_plus_one"],
         children: [
@@ -54,89 +54,91 @@ const originalScopes: OriginalScope[] = [
             start: { line: 1, column: 2 },
             end: { line: 4, column: 3 },
             kind: "function",
+            isStackFrame: true,
             name: "inner",
             variables: ["value", "value_plus_one"],
+            children: [],
           }
         ],
       }
     ],
-  }
+  },
 ];
 
-const generatedRanges: GeneratedRange = {
+const generatedRanges: GeneratedRange[] = [{
   start: { line: 0, column: 0 },
   end: { line: 8, column: 5 },
-  isScope: true,
-  original: {
-    scope: originalScopes[0],
-    bindings: ["f"],
-  },
+  isStackFrame: false,
+  isHidden: false,
+  originalScope: originalScopes[0],
+  values: ["f"],
   children: [
     {
       start: { line: 0, column: 0 },
       end: { line: 7, column: 1 },
-      original: {
-        scope: originalScopes[0].children![0],
-        bindings: ["g", "a", "b"],
-      },
-      isScope: true,
+      isStackFrame: true,
+      isHidden: false,
+      originalScope: originalScopes[0].children![0],
+      values: ["g", "a", "b"],
       children: [
         {
           start: { line: 1, column: 2 },
           end: { line: 4, column: 3 },
-          isScope: true,
-          original: {
-            scope: originalScopes[0].children![0].children![0],
-            bindings: ["a", "b"],
-          },
-        }
+          isStackFrame: true,
+          isHidden: false,
+          originalScope: originalScopes[0].children![0].children![0],
+          values: ["a", "b"],
+          children: [],
+        },
       ],
-    }
+    },
   ],
-};
+}];
 
 test("decode scopes from sourcemap", () => {
-  expect(decodeOriginalScopes(encodedOriginalScopes, scopeNames)).toStrictEqual(originalScopes);
-  expect(decodeGeneratedRanges(encodedGeneratedRanges, scopeNames, originalScopes)).toStrictEqual(generatedRanges);
+  const { scopes, ranges } = decodeScopes(encodedScopes, scopeNames);
+  expect(scopes).toStrictEqual(originalScopes);
+  expect(ranges).toStrictEqual(generatedRanges);
 });
 
 test("encode scopes to sourcemap", () => {
-  const names: string[] = [];
-  const encodedOriginal = originalScopes.map(scope => encodeOriginalScopes(scope, names));
-  const encodedGenerated = encodeGeneratedRanges(generatedRanges, originalScopes, names);
-  expect(encodedOriginal).toStrictEqual(encodedOriginalScopes);
-  expect(encodedGenerated).toStrictEqual(encodedGeneratedRanges);
+  const { scopes, names } = encodeScopes(originalScopes, generatedRanges);
+  expect(scopes).toStrictEqual(encodedScopes);
   expect(names).toStrictEqual(scopeNames);
 });
 
 test("original frames at line 4", () => {
-  const debuggerScopes: DebuggerScope[] = [
+  const debuggerScopes: GeneratedDebuggerScope[] = [
     {
-      // The global scope, we only show one example binding
+      start: generatedRanges[0].start,
+      end: generatedRanges[0].end,
       bindings: [
-        { varname: "document", value: { objectId: 1 }}
-      ]
+        { varname: "document", value: { objectId: 1 } }
+      ],
     },
     {
-      // The module scope
+      start: generatedRanges[0].start,
+      end: generatedRanges[0].end,
       bindings: [
         { varname: "f", value: { objectId: 2 } },
-      ]
+      ],
     },
     {
-      // The scope of the outer function
+      start: generatedRanges[0].children![0].start,
+      end: generatedRanges[0].children![0].end,
       bindings: [
         { varname: "a", value: { value: 1 } },
         { varname: "b", value: { value: 2 } },
         { varname: "g", value: { objectId: 3 } },
-      ]
+      ],
     },
     {
-      // The scope of the inner function
+      start: generatedRanges[0].children![0].children![0].start,
+      end: generatedRanges[0].children![0].children![0].end,
       bindings: [
         { varname: "a", value: { value: 2 } },
         { varname: "b", value: { value: 3 } },
-      ]
+      ],
     },
   ];
   expect(getOriginalFrames(

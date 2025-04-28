@@ -1,20 +1,22 @@
-import { Location, DebuggerScope, UnavailableValue, DebuggerValue, DebuggerFrame, OriginalLocation, OriginalScope, GeneratedRange, DebuggerScopeBinding } from "./types";
-import { assert, findLastIndex, isInRange } from "./util";
+import type { OriginalScope, GeneratedRange } from "@chrome-devtools/source-map-scopes-codec";
+import { Location, OriginalDebuggerScope, GeneratedDebuggerScope, UnavailableValue, DebuggerValue, DebuggerFrame, OriginalLocation, DebuggerScopeBinding } from "./types";
+import { assert, findLastIndex, isEnclosing, isInRange } from "./util";
 
 export function getOriginalFrames(
   location: Location,
   originalLocation: OriginalLocation,
-  generatedRanges: GeneratedRange,
+  generatedRanges: GeneratedRange[],
   originalScopes: OriginalScope[],
-  debuggerScopeChain: DebuggerScope[]
+  debuggerScopeChain: GeneratedDebuggerScope[]
 ): DebuggerFrame[] {
 
   const generatedRangeChain = getGeneratedRangeChain(location, generatedRanges);
+  assert(generatedRangeChain.length > 0);
 
   const originalFrames: DebuggerFrame[] = [getOriginalFrame(location, originalLocation, generatedRangeChain, originalScopes, debuggerScopeChain)];
 
   for (let i = generatedRangeChain.length - 1; i >= 0; i--) {
-    const callsite = generatedRangeChain[i].original?.callsite;
+    const callsite = generatedRangeChain[i].callSite;
     if (callsite) {
       originalFrames.push(getOriginalFrame(location, callsite, generatedRangeChain.slice(0, i + 1), originalScopes, debuggerScopeChain));
     }
@@ -28,33 +30,34 @@ export function getOriginalFrame(
   originalLocation: OriginalLocation,
   generatedRangeChain: GeneratedRange[],
   originalScopes: OriginalScope[],
-  debuggerScopeChain: DebuggerScope[]
+  debuggerScopeChain: GeneratedDebuggerScope[]
 ): DebuggerFrame {
 
   const originalScopeChain = getOriginalScopeChain(originalLocation, originalScopes[originalLocation.sourceIndex]);
-  const originalDebuggerScopeChain: DebuggerScope[] = originalScopeChain.map(originalScope => {
-    const generatedRangeIndex = findLastIndex(generatedRangeChain, generatedRange => generatedRange.original?.scope === originalScope);
+  const originalDebuggerScopeChain: OriginalDebuggerScope[] = originalScopeChain.map(originalScope => {
+    const generatedRangeIndex = findLastIndex(generatedRangeChain, generatedRange => generatedRange.originalScope === originalScope);
     if (generatedRangeIndex < 0) {
       return { bindings: [] };
     }
     const generatedRange = generatedRangeChain[generatedRangeIndex];
-    assert(generatedRange.original);
-    const debuggerScopeIndex = getCorrespondingDebuggerScopeIndex(generatedRangeChain, generatedRangeIndex);
+    assert(generatedRange.originalScope);
+    const debuggerScopeIndex = debuggerScopeChain.findLastIndex(scope => isEnclosing(scope, generatedRange));
+    assert(debuggerScopeIndex >= 0);
     const debuggerScopeChainForLookup = debuggerScopeChain.slice(0, debuggerScopeIndex + 1);
 
     const originalBindings: DebuggerScopeBinding[] = [];
-    assert(originalScope.variables?.length === generatedRange.original.bindings?.length);
-    if (originalScope.variables && generatedRange.original.bindings) {
+    assert(originalScope.variables?.length === generatedRange.values?.length);
+    if (originalScope.variables && generatedRange.values) {
       for (let j = 0; j < originalScope.variables.length; j++) {
         const varname = originalScope.variables[j];
-        const expressionOrBindingRanges = generatedRange.original.bindings[j];
+        const expressionOrBindingRanges = generatedRange.values[j];
         let expression: string | undefined = undefined;
         if (typeof expressionOrBindingRanges === "string") {
           expression = expressionOrBindingRanges;
-        } else if (typeof expressionOrBindingRanges !== "undefined") {
+        } else if (Array.isArray(expressionOrBindingRanges)) {
           for (const bindingRange of expressionOrBindingRanges) {
-            if (isInRange(generatedLocation, bindingRange)) {
-              expression = bindingRange.expression;
+            if (isInRange(generatedLocation, { start: bindingRange.from, end: bindingRange.to })) {
+              expression = bindingRange.value;
             }
           }
         }
@@ -67,7 +70,7 @@ export function getOriginalFrame(
     return { bindings: originalBindings };
   });
 
-  originalDebuggerScopeChain.unshift(debuggerScopeChain[0]);
+  originalDebuggerScopeChain.unshift({ bindings: debuggerScopeChain[0].bindings });
 
   return {
     location: originalLocation,
@@ -76,14 +79,13 @@ export function getOriginalFrame(
   };
 }
 
-export function getGeneratedRangeChain(location: Location, generatedRange: GeneratedRange): GeneratedRange[] {
-  assert(isInRange(location, generatedRange));
-  for (const childScope of generatedRange.children ?? []) {
-    if (isInRange(location, childScope)) {
-      return [generatedRange, ...getGeneratedRangeChain(location, childScope)];
+export function getGeneratedRangeChain(location: Location, generatedRanges: GeneratedRange[]): GeneratedRange[] {
+  for (const range of generatedRanges) {
+    if (isInRange(location, range)) {
+      return [range, ...getGeneratedRangeChain(location, range.children)];
     }
   }
-  return [generatedRange];
+  return [];
 }
 
 export function getOriginalScopeChain(originalLocation: OriginalLocation, originalScope: OriginalScope): OriginalScope[] {
@@ -96,15 +98,8 @@ export function getOriginalScopeChain(originalLocation: OriginalLocation, origin
   return [originalScope];
 }
 
-export function getCorrespondingDebuggerScopeIndex(
-  generatedRangeChain: GeneratedRange[],
-  generatedRangeIndex: number
-): number {
-  return generatedRangeChain.slice(0, generatedRangeIndex + 1).filter(range => range.isScope).length;
-}
-
 const numberRegex = /^\s*[+-]?(\d+|\d*\.\d+|\d+\.\d*)([Ee][+-]?\d+)?\s*$/;
-export function lookupScopeValue(expression: string, scopes: DebuggerScope[]): DebuggerValue {
+export function lookupScopeValue(expression: string, scopes: GeneratedDebuggerScope[]): DebuggerValue {
   if (expression === "undefined") {
     return { value: undefined };
   }
@@ -137,7 +132,7 @@ export function lookupScopeValue(expression: string, scopes: DebuggerScope[]): D
 // the given debugger values, e.g. https://chromedevtools.github.io/devtools-protocol/tot/Runtime/#method-callFunctionOn
 function evaluateWithScopes(
   expression: string,
-  scopes: DebuggerScope[],
+  scopes: GeneratedDebuggerScope[],
   evaluateWithArguments: (functionDeclaration: string, args: DebuggerValue[]) => DebuggerValue
 ) {
   const nonGlobalScopes = scopes.slice(1);
