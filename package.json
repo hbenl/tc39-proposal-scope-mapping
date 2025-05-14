@@ -25,6 +25,7 @@
   "dependencies": {
     "@chrome-devtools/source-map-scopes-codec": "npm:@jsr/chrome-devtools__source-map-scopes-codec@^0.2.0",
     "@jridgewell/trace-mapping": "^0.3.25",
+    "terser": "github:hbenl/terser#scopes",
     "vlq": "^2.0.4"
   }
 }
