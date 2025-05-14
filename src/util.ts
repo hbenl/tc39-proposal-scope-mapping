@@ -1,4 +1,4 @@
-const { encode, decode } = await import("@chrome-devtools/source-map-scopes-codec");
+import { encode, decode } from "@chrome-devtools/source-map-scopes-codec";
 import { GeneratedRange, Location, LocationRange, OriginalScope } from "./types";
 
 export function assert(condition: any): asserts condition {
