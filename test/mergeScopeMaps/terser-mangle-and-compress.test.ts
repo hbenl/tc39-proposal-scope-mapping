@@ -1,6 +1,6 @@
 import { minify } from "terser";
-import { decode, SourceMapJson } from "@chrome-devtools/source-map-scopes-codec";
 import { mergeScopeMaps } from "../../src/mergeScopeMaps";
+import { addDecodedScopes } from "../../src/util";
 
 const originalSource = `
 function f1(x) {
@@ -26,7 +26,7 @@ test("terser mangle and compress", async () => {
   );
 
   expect(intermediateSource).toBe("function f1(o){function l(o){console.log(\"Hello \"+o)}l(\"dear \"+o)}f1(\"world\");");
-  decodeScopes(sourceMap1 as any);
+  addDecodedScopes(sourceMap1 as any);
 
   const { code: generatedSource, map: sourceMap2 } = await minify(
     intermediateSource!,
@@ -43,7 +43,7 @@ test("terser mangle and compress", async () => {
   );
 
   expect(generatedSource).toBe("(function(o){console.log(\"Hello \"+o)})(\"dear \"+\"world\");");
-  decodeScopes(sourceMap2 as any);
+  addDecodedScopes(sourceMap2 as any);
 
   const { generatedRanges: mergedGeneratedRanges, originalScopes } = mergeScopeMaps([sourceMap1 as any], sourceMap2 as any);
 
@@ -73,9 +73,3 @@ test("terser mangle and compress", async () => {
   expect(grandchildRange.originalScope?.variables[0]).toBe("y");
   expect(grandchildRange.values[0]).toBe("o");
 });
-
-function decodeScopes(sourcemap: SourceMapJson) {
-  const { scopes: originalScopes, ranges: generatedRanges } = decode(sourcemap);
-  (sourcemap as any).originalScopes = originalScopes;
-  (sourcemap as any).generatedRanges = generatedRanges[0];
-}

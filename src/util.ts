@@ -1,4 +1,4 @@
-import { encode, decode } from "@chrome-devtools/source-map-scopes-codec";
+import { encode, decode, SourceMapJson } from "@chrome-devtools/source-map-scopes-codec";
 import { GeneratedRange, Location, LocationRange, OriginalScope } from "./types";
 
 export function assert(condition: any): asserts condition {
@@ -117,4 +117,10 @@ function removeParentsFromRanges(range: GeneratedRange): GeneratedRange {
     result.originalScope = removeParentsFromScopes(originalScope) as OriginalScope;
   }
   return result;
+}
+
+export function addDecodedScopes(sourcemap: SourceMapJson) {
+  const { scopes: originalScopes, ranges: generatedRanges } = decode(sourcemap);
+  (sourcemap as any).originalScopes = originalScopes;
+  (sourcemap as any).generatedRanges = generatedRanges[0];
 }
