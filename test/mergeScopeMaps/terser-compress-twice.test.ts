@@ -89,3 +89,167 @@ test("generated sources and merged scope map", async () => {
   expect(otherGrandchildRange.callSite).toStrictEqual(grandchildRange.callSite);
   expect(otherGrandchildRange.values).toStrictEqual(grandchildRange.values);
 });
+
+test("original frames at column 42", async () => {
+  const { generatedRanges, originalScopes } = await transpile();
+  const debuggerScopes: GeneratedDebuggerScope[] = [
+    {
+      // The global scope, we only show one example binding
+      start: generatedRanges.start,
+      end: generatedRanges.end,
+      bindings: [
+        { varname: "document", value: { objectId: 1 }}
+      ]
+    },
+    {
+      // The module scope
+      start: generatedRanges.start,
+      end: generatedRanges.end,
+      bindings: [
+        { varname: "l", value: { value: "dear world" }}
+      ]
+    },
+  ];
+  expect(getOriginalFrames(
+    { line: 0, column: 41 },
+    { sourceIndex: 0, line: 3, column: 12 },
+    [generatedRanges],
+    originalScopes,
+    debuggerScopes
+  )).toMatchInlineSnapshot(`
+[
+  {
+    "location": {
+      "column": 12,
+      "line": 3,
+      "sourceIndex": 0,
+    },
+    "name": "f2",
+    "scopes": [
+      {
+        "bindings": [
+          {
+            "value": {
+              "objectId": 1,
+            },
+            "varname": "document",
+          },
+        ],
+      },
+      {
+        "bindings": [
+          {
+            "value": {
+              "unavailable": true,
+            },
+            "varname": "f1",
+          },
+        ],
+      },
+      {
+        "bindings": [
+          {
+            "value": {
+              "value": "world",
+            },
+            "varname": "x",
+          },
+          {
+            "value": {
+              "unavailable": true,
+            },
+            "varname": "f2",
+          },
+        ],
+      },
+      {
+        "bindings": [
+          {
+            "value": {
+              "value": "dear world",
+            },
+            "varname": "y",
+          },
+        ],
+      },
+    ],
+  },
+  {
+    "location": {
+      "column": 2,
+      "line": 5,
+      "sourceIndex": 0,
+    },
+    "name": "f1",
+    "scopes": [
+      {
+        "bindings": [
+          {
+            "value": {
+              "objectId": 1,
+            },
+            "varname": "document",
+          },
+        ],
+      },
+      {
+        "bindings": [
+          {
+            "value": {
+              "unavailable": true,
+            },
+            "varname": "f1",
+          },
+        ],
+      },
+      {
+        "bindings": [
+          {
+            "value": {
+              "value": "world",
+            },
+            "varname": "x",
+          },
+          {
+            "value": {
+              "unavailable": true,
+            },
+            "varname": "f2",
+          },
+        ],
+      },
+    ],
+  },
+  {
+    "location": {
+      "column": 0,
+      "line": 7,
+      "sourceIndex": 0,
+    },
+    "name": undefined,
+    "scopes": [
+      {
+        "bindings": [
+          {
+            "value": {
+              "objectId": 1,
+            },
+            "varname": "document",
+          },
+        ],
+      },
+      {
+        "bindings": [
+          {
+            "value": {
+              "unavailable": true,
+            },
+            "varname": "f1",
+          },
+        ],
+      },
+    ],
+  },
+]
+`);
+});
