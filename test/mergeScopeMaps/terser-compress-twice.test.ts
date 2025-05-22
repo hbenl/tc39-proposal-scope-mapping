@@ -1,7 +1,9 @@
 import { minify } from "terser";
 import { mergeScopeMaps } from "../../src/mergeScopeMaps";
 import { addDecodedScopes } from "../../src/util";
-import { EncodedSourceMap } from "@jridgewell/trace-mapping";
+import { SourceMapJson } from "@chrome-devtools/source-map-scopes-codec";
+import { GeneratedDebuggerScope } from "../../src/types";
+import { getOriginalFrames } from "../../src/getOriginalFrames";
 
 const originalSource = `
 function f1(x) {
@@ -26,7 +28,7 @@ async function transpile() {
     }
   );
 
-  addDecodedScopes(sourceMap1 as EncodedSourceMap);
+  addDecodedScopes(sourceMap1 as SourceMapJson);
 
   const { code: generatedSource, map: sourceMap2 } = await minify(
     intermediateSource!,
@@ -42,12 +44,12 @@ async function transpile() {
     }
   );
 
-  addDecodedScopes(sourceMap2 as EncodedSourceMap);
+  addDecodedScopes(sourceMap2 as SourceMapJson);
 
   return { intermediateSource, generatedSource, ...mergeScopeMaps([sourceMap1 as any], sourceMap2 as any) };
 }
 
-test("generated sources, scopes and ranges", async () => {
+test("generated sources and merged scope map", async () => {
   const { intermediateSource, generatedSource, generatedRanges, originalScopes } = await transpile();
 
   expect(intermediateSource).toBe('function f1(o){var l;l="dear "+o,console.log("Hello "+l)}f1("world");');
@@ -70,13 +72,20 @@ test("generated sources, scopes and ranges", async () => {
   expect(childRange.originalScope!.variables[1]).toBe("f2");
   // expect(childRange!.values[1]).toBe(null);
   expect(childRange.callSite).toStrictEqual({ sourceIndex: 0, line: 7, column: 0 });
-  expect(childRange.children!.length).toBe(1);
+  expect(childRange.children.length).toBe(2);
 
-  const grandchildRange = childRange.children![0];
+  const grandchildRange = childRange.children[0];
   expect(grandchildRange.start).toStrictEqual({ line: 0, column: 6 });
   expect(grandchildRange.end).toStrictEqual({ line: 0, column: 8 });
   expect(grandchildRange.originalScope).toBe(originalScopes[0].children![0].children![0]);
   expect(grandchildRange.callSite).toStrictEqual({ sourceIndex: 0, line: 5, column: 2 });
   expect(grandchildRange.originalScope?.variables[0]).toBe("y");
   expect(grandchildRange.values[0]).toBe("l");
+
+  const otherGrandchildRange = childRange.children[1];
+  expect(otherGrandchildRange.start).toStrictEqual({ line: 0, column: 24 });
+  expect(otherGrandchildRange.end).toStrictEqual({ line: 0, column: 45 });
+  expect(otherGrandchildRange.originalScope).toBe(grandchildRange.originalScope);
+  expect(otherGrandchildRange.callSite).toStrictEqual(grandchildRange.callSite);
+  expect(otherGrandchildRange.values).toStrictEqual(grandchildRange.values);
 });

@@ -1,7 +1,7 @@
 import { EncodedSourceMap, TraceMap, eachMapping, originalPositionFor, generatedPositionFor } from "@jridgewell/trace-mapping";
 import type { Binding, SubRangeBinding } from "@chrome-devtools/source-map-scopes-codec";
-import { GeneratedRange, Location, OriginalScope } from "./types";
-import { assert, collectGeneratedRangeParents, collectGeneratedRangesByLocation, compareLocations, isBefore, isEqual, isInRange, rangeKey } from "./util";
+import { GeneratedRange, Location, LocationRange, OriginalScope } from "./types";
+import { assert, collectGeneratedRangeParents, collectGeneratedRangesByLocation, compareLocations, isBefore, isEqual, isInRange, isOverlapping, rangeKey } from "./util";
 
 export interface ScopeMap {
   originalScopes: OriginalScope[];
@@ -108,10 +108,7 @@ export function mergeScopeMaps(
     const mappedChildren: GeneratedRange[] = [];
     for (const child of intermediateGeneratedRange.children ?? []) {
       if (!mergedChildren.some(mergedChild => mergedChild.intermediateGeneratedRange === child)) {
-        const mappedChild = mapIntermediateGeneratedRange(child, sourceIndex, generatedRange, mergedChildren);
-        if (mappedChild) {
-          mappedChildren.push(mappedChild);
-        }
+        mappedChildren.push(...mapIntermediateGeneratedRange(child, sourceIndex, generatedRange, mergedChildren));
       }
     }
     sortByStartLocation(mappedChildren);
@@ -133,73 +130,72 @@ export function mergeScopeMaps(
     intermediateSourceIndex: number,
     generatedRangeParent: GeneratedRange,
     mergedGeneratedRanges: MergedRange[]
-  ): GeneratedRange | undefined {
+  ): GeneratedRange[] {
     const { isHidden } = intermediateGeneratedRange;
     const children: GeneratedRange[] = [];
     for (const intermediateChild of intermediateGeneratedRange.children ?? []) {
       let child = mergedGeneratedRanges.find(merged =>
         merged.intermediateGeneratedRange === intermediateChild
       )?.mergedGeneratedRange;
-      if (!child) {
-        child = mapIntermediateGeneratedRange(
+      if (child) {
+        children.push(child);
+      } else {
+        children.push(...mapIntermediateGeneratedRange(
           intermediateChild,
           intermediateSourceIndex,
           generatedRangeParent,
           mergedGeneratedRanges
+        ));
+      }
+    }
+
+    const inlinedRanges = findInlinedRanges(intermediateGeneratedRange, generatedRangeParent, traceMap2);
+    return inlinedRanges.map(inlinedRange => {
+      const rangeChildren: GeneratedRange[] = [];
+      for (const child of children) {
+        if (isOverlapping(child, inlinedRange)) {
+          rangeChildren.push(child);
+          if (isBefore(child.start, inlinedRange.start)) {
+            inlinedRange.start = child.start;
+          }
+          if (isBefore(inlinedRange.end, child.end)) {
+            inlinedRange.end = child.end;
+          }
+        }
+      }
+
+      let originalScope = intermediateGeneratedRange.originalScope;
+      let values: GeneratedRange["values"] = [];
+      let callSite: GeneratedRange["callSite"] = undefined;
+      if (originalScope) {
+        values = intermediateGeneratedRange.values.map(
+          binding => applyScopeMapToBinding(
+            binding,
+            generatedRangeParent,
+            generatedRangeParents,
+            sourceMap2.sources[intermediateSourceIndex]!,
+            traceMap2
+          )
         );
+        const intermediateCallsite = intermediateGeneratedRange.callSite;
+        if (intermediateCallsite) {
+          callSite = {
+            ...intermediateCallsite,
+            sourceIndex: intermediateCallsite.sourceIndex + originalSourceOffsets[intermediateSourceIndex]
+          };
+        }
       }
-      if (child) {
-        children.push(child);
-      }
-    }
 
-    let inlinedRange = findInlinedRange(intermediateGeneratedRange, generatedRangeParent, traceMap2);
-    if (!inlinedRange) {
-      if (children.length === 0) {
-        return undefined;
-      }
-      inlinedRange = { start: children[0].start, end: children[0].end };
-    }
-    for (const child of children) {
-      if (isBefore(child.start, inlinedRange.start)) {
-        inlinedRange.start = child.start;
-      }
-      if (isBefore(inlinedRange.end, child.end)) {
-        inlinedRange.end = child.end;
-      }
-    }
-
-    let originalScope = intermediateGeneratedRange.originalScope;
-    let values: GeneratedRange["values"] = [];
-    let callSite: GeneratedRange["callSite"] = undefined;
-    if (originalScope) {
-      values = intermediateGeneratedRange.values.map(
-        binding => applyScopeMapToBinding(
-          binding,
-          generatedRangeParent,
-          generatedRangeParents,
-          sourceMap2.sources[intermediateSourceIndex]!,
-          traceMap2
-        )
-      );
-      const intermediateCallsite = intermediateGeneratedRange.callSite;
-      if (intermediateCallsite) {
-        callSite = {
-          ...intermediateCallsite,
-          sourceIndex: intermediateCallsite.sourceIndex + originalSourceOffsets[intermediateSourceIndex]
-        };
-      }
-    }
-
-    return {
-      ...inlinedRange,
-      children,
-      originalScope,
-      values,
-      callSite,
-      isStackFrame: false,
-      isHidden,
-    };
+      return {
+        ...inlinedRange,
+        children: rangeChildren,
+        originalScope,
+        values,
+        callSite,
+        isStackFrame: false,
+        isHidden,
+      };
+    });
   }
 
   const mergedRanges = applyScopeMapToGeneratedRange(sourceMap2.generatedRanges);
@@ -218,18 +214,23 @@ export function mergeScopeMaps(
   return { originalScopes, generatedRanges };
 }
 
-function findInlinedRange(
+function findInlinedRanges(
   intermediateGeneratedRange: GeneratedRange,
   generatedRangeParent: GeneratedRange,
   tracemap: TraceMap
-) {
+): LocationRange[] {
   let start: Location | undefined;
   let end: Location | undefined;
-  let finished = false;
-  eachMapping(tracemap, mapping => {
-    if (finished) {
-      return;
+  const ranges: LocationRange[] = [];
+  function saveCurrentRange() {
+    if (start && end) {
+      ranges.push({ start, end });
+      start = undefined;
+      end = undefined;
     }
+  }
+
+  eachMapping(tracemap, mapping => {
     const { originalLine, originalColumn, generatedLine, generatedColumn } = mapping;
     if (
       originalLine != null &&
@@ -245,14 +246,12 @@ function findInlinedRange(
         start = end;
       }
     } else {
-      if (start && end) {
-        finished = true;
-      }
+      saveCurrentRange();
     }
   });
-  if (start && end) {
-    return { start, end };
-  }
+  saveCurrentRange();
+
+  return ranges;
 }
 
 function sortByStartLocation(generatedRanges: GeneratedRange[]) {

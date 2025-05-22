@@ -34,6 +34,10 @@ export function isEnclosing(range1: LocationRange, range2: LocationRange) {
   return isInRange(range2.start, range1) && isInRange(range2.end, range1);
 }
 
+export function isOverlapping(range1: LocationRange, range2: LocationRange) {
+  return !isBefore(range1.end, range2.start) && !isBefore(range2.end, range1.start);
+}
+
 export function compareLocations(loc1: Location, loc2: Location) {
   if (isBefore(loc1, loc2)) {
     return -1;

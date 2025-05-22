@@ -12,7 +12,7 @@ function f1(x) {
 f1("world");
 `;
 
-test("terser mangle and compress", async () => {
+test("generated sources and merged scope map", async () => {
   const { code: intermediateSource, map: sourceMap1 } = await minify(
     originalSource,
     {
