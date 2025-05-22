@@ -16,9 +16,13 @@ export function getOriginalFrames(
   const originalFrames: DebuggerFrame[] = [getOriginalFrame(location, originalLocation, generatedRangeChain, originalScopes, debuggerScopeChain)];
 
   for (let i = generatedRangeChain.length - 1; i >= 0; i--) {
-    const callsite = generatedRangeChain[i].callSite;
+    const generatedRange = generatedRangeChain[i];
+    const callsite = generatedRange.callSite;
     if (callsite) {
+      assert(!generatedRange.isStackFrame);
       originalFrames.push(getOriginalFrame(location, callsite, generatedRangeChain.slice(0, i + 1), originalScopes, debuggerScopeChain));
+    } else if (generatedRange.isStackFrame) {
+      break;
     }
   }
 
