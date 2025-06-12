@@ -3,9 +3,6 @@
   "version": "0.3.0",
   "description": "",
   "main": "lib/index.js",
-  "files": [
-    "lib/**/*"
-  ],
   "scripts": {
     "build": "tsc",
     "test": "jest"
