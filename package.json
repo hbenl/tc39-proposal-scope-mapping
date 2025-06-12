@@ -23,6 +23,7 @@
     "typescript": "^5.2.2"
   },
   "dependencies": {
+    "@ampproject/remapping": "^2.3.0",
     "@chrome-devtools/source-map-scopes-codec": "npm:@jsr/chrome-devtools__source-map-scopes-codec@^0.2.0",
     "@jridgewell/trace-mapping": "^0.3.25",
     "terser": "github:hbenl/terser#scopes",

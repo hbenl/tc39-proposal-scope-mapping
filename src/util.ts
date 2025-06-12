@@ -79,12 +79,12 @@ export function rangeKey({ start, end }: { start: Location, end: Location }): st
 }
 
 export function collectGeneratedRangesByLocation(
-  generatedRange: GeneratedRange,
+  generatedRanges: GeneratedRange[],
   generatedRangesByLocation = new Map<string, GeneratedRange>()
 ) {
-  generatedRangesByLocation.set(rangeKey(generatedRange), generatedRange);
-  for (const child of generatedRange.children ?? []) {
-    collectGeneratedRangesByLocation(child, generatedRangesByLocation);
+  for (const generatedRange of generatedRanges) {
+    generatedRangesByLocation.set(rangeKey(generatedRange), generatedRange);
+    collectGeneratedRangesByLocation(generatedRange.children, generatedRangesByLocation);
   }
   return generatedRangesByLocation;
 }

@@ -1,3 +1,4 @@
+import { encode } from "@chrome-devtools/source-map-scopes-codec";
 import { GeneratedRange, OriginalScope } from "../../src/types";
 import { mergeScopeMaps } from "../../src/mergeScopeMaps";
 
@@ -131,40 +132,42 @@ const generatedRanges: GeneratedRange = {
   ],
 };
 
+const { scopes: sourceMap1Scopes, names: sourceMap1Names } = encode({ scopes: originalScopes, ranges: [intermediateGeneratedRanges] });
 const sourceMap1 = {
-  "version": 3 as 3,
-  "file": "intermediate.js",
-  "sources": ["original.js"],
-  "mappings": "AAGA;;AAFA;;AAMA",
-  "names": [],
-  originalScopes,
-  generatedRanges: intermediateGeneratedRanges,
+  version: 3 as 3,
+  file: "intermediate.js",
+  sources: ["original.js"],
+  mappings: "AAGA;;AAFA;;AAMA",
+  names: sourceMap1Names!,
+  scopes: sourceMap1Scopes!,
 };
 
+const { scopes: sourceMap2Scopes, names: sourceMap2Names } = encode({ scopes: intermediateOriginalScopes, ranges: [generatedRanges] });
 const sourceMap2 = {
-  "version": 3 as 3,
-  "file": "generated.js",
-  "sources": ["intermediate.js"],
-  "mappings": "AAAA;AAEA,QAAU;AAEV",
-  "names": [],
-  originalScopes: intermediateOriginalScopes,
-  generatedRanges,
+  version: 3 as 3,
+  file: "generated.js",
+  sources: ["intermediate.js"],
+  mappings: "AAAA;AAEA,QAAU;AAEV",
+  names: sourceMap2Names!,
+  scopes: sourceMap2Scopes!,
 };
 
 test("merged scope map", () => {
   const { generatedRanges: mergedGeneratedRanges } = mergeScopeMaps([sourceMap1], sourceMap2);
 
-  expect(mergedGeneratedRanges.start).toStrictEqual({ line: 0, column: 0 });
-  expect(mergedGeneratedRanges.end).toStrictEqual({ line: 2, column: 19 });
-  expect(mergedGeneratedRanges.originalScope).toBe(originalScopes[0]);
-  expect(mergedGeneratedRanges.values).toStrictEqual([null]);
-  expect(mergedGeneratedRanges.callSite).toBe(undefined);
-  expect(mergedGeneratedRanges.children?.length).toBe(1);
+  expect(mergedGeneratedRanges[0].start).toStrictEqual({ line: 0, column: 0 });
+  expect(mergedGeneratedRanges[0].end).toStrictEqual({ line: 2, column: 19 });
+  expect(mergedGeneratedRanges[0].originalScope!.start).toStrictEqual(originalScopes[0].start);
+  expect(mergedGeneratedRanges[0].originalScope!.end).toStrictEqual(originalScopes[0].end);
+  expect(mergedGeneratedRanges[0].values).toStrictEqual([null]);
+  expect(mergedGeneratedRanges[0].callSite).toBe(undefined);
+  expect(mergedGeneratedRanges[0].children?.length).toBe(1);
 
-  const childRange = mergedGeneratedRanges.children?.[0];
+  const childRange = mergedGeneratedRanges[0].children?.[0];
   expect(childRange?.start).toStrictEqual({ line: 1, column: 0 });
   expect(childRange?.end).toStrictEqual({ line: 1, column: 19 });
-  expect(childRange?.originalScope).toBe(originalScopes[0].children![1]);
+  expect(childRange?.originalScope!.start).toStrictEqual(originalScopes[0].children![1].start);
+  expect(childRange?.originalScope!.end).toStrictEqual(originalScopes[0].children![1].end);
   expect(childRange?.values).toStrictEqual([]);
   expect(childRange?.callSite).toStrictEqual(undefined);
   expect(childRange?.children?.length).toBe(1);
@@ -172,7 +175,8 @@ test("merged scope map", () => {
   const grandchildRange = childRange?.children?.[0];
   expect(grandchildRange?.start).toStrictEqual({ line: 1, column: 0 });
   expect(grandchildRange?.end).toStrictEqual({ line: 1, column: 8 });
-  expect(grandchildRange?.originalScope).toBe(originalScopes[0].children![0]);
+  expect(grandchildRange?.originalScope!.start).toStrictEqual(originalScopes[0].children![0].start);
+  expect(grandchildRange?.originalScope!.end).toStrictEqual(originalScopes[0].children![0].end);
   expect(grandchildRange?.values).toStrictEqual(['"bar"']);
   expect(grandchildRange?.callSite).toStrictEqual({ sourceIndex: 0, line: 5, column: 0 });
   expect(grandchildRange?.children?.length).toBe(0);

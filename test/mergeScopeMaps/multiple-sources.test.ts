@@ -1,3 +1,4 @@
+import { encode } from "@chrome-devtools/source-map-scopes-codec";
 import { GeneratedRange, OriginalScope } from "../../src/types";
 import { mergeScopeMaps } from "../../src/mergeScopeMaps";
 
@@ -210,86 +211,85 @@ const generatedRanges: GeneratedRange = {
   ]
 };
 
+const { scopes: sourceMap1_1Scopes, names: sourceMap1_1Names } = encode({ scopes: originalScopes1, ranges: [intermediateGeneratedRanges1] });
 const sourceMap1_1 = {
-  "version": 3 as 3,
-  "file": "intermediate1.js",
-  "sources": ["original1.js"],
-  "mappings": "AAAA",
-  "names": [],
-  originalScopes: originalScopes1,
-  generatedRanges: intermediateGeneratedRanges1,
+  version: 3 as 3,
+  file: "intermediate1.js",
+  sources: ["original1.js"],
+  mappings: "AAAA",
+  names: sourceMap1_1Names!,
+  scopes: sourceMap1_1Scopes!,
 };
 
+const { scopes: sourceMap1_2Scopes, names: sourceMap1_2Names } = encode({ scopes: originalScopes2, ranges: [intermediateGeneratedRanges2] });
 const sourceMap1_2 = {
-  "version": 3 as 3,
-  "file": "intermediate2.js",
-  "sources": ["original2.js", "original3.js"],
-  "mappings": "AAAA;AACA;AACA;AACA;AAFA",
-  "names": [],
-  originalScopes: originalScopes2,
-  generatedRanges: intermediateGeneratedRanges2,
+  version: 3 as 3,
+  file: "intermediate2.js",
+  sources: ["original2.js", "original3.js"],
+  mappings: "AAAA;AACA;AACA;AACA;AAFA",
+  names: sourceMap1_2Names!,
+  scopes: sourceMap1_2Scopes!,
 };
 
+const { scopes: sourceMap2Scopes, names: sourceMap2Names } = encode({ scopes: intermediateOriginalScopes, ranges: [generatedRanges] });
 const sourceMap2 = {
-  "version": 3 as 3,
-  "file": "generated.js",
-  "sources": ["intermediate1.js", "intermediate2.js"],
-  "mappings": "AAAA;ACCA;AAGA",
-  "names": [],
-  originalScopes: intermediateOriginalScopes,
-  generatedRanges,
+  version: 3 as 3,
+  file: "generated.js",
+  sources: ["intermediate1.js", "intermediate2.js"],
+  mappings: "AAAA;ACCA;AAGA",
+  names: sourceMap2Names!,
+  scopes: sourceMap2Scopes!,
 };
 
 test("merged scope map", () => {
   const { generatedRanges: mergedGeneratedRanges } = mergeScopeMaps([sourceMap1_1, sourceMap1_2], sourceMap2);
 
-  expect(mergedGeneratedRanges.start).toStrictEqual({ line: 0, column: 0 });
-  expect(mergedGeneratedRanges.end).toStrictEqual({ line: 2, column: 19 });
-  expect(mergedGeneratedRanges.originalScope).toBe(undefined);
-  expect(mergedGeneratedRanges.children?.length).toBe(2);
+  let range = mergedGeneratedRanges[0];
+  expect(range?.start).toStrictEqual({ line: 0, column: 0 });
+  expect(range?.end).toStrictEqual({ line: 0, column: 19 });
+  expect(range?.originalScope!.start).toStrictEqual(originalScopes1[0].start);
+  expect(range?.values).toStrictEqual([]);
+  expect(range?.children?.length).toBe(0);
 
-  let childRange = mergedGeneratedRanges.children?.[0];
-  expect(childRange?.start).toStrictEqual({ line: 0, column: 0 });
-  expect(childRange?.end).toStrictEqual({ line: 0, column: 19 });
-  expect(childRange?.originalScope).toBe(originalScopes1[0]);
-  expect(childRange?.values).toStrictEqual([]);
-  expect(childRange?.children?.length).toBe(0);
+  range = mergedGeneratedRanges[1];
+  expect(range?.start).toStrictEqual({ line: 1, column: 0 });
+  expect(range?.end).toStrictEqual({ line: 2, column: 19 });
+  expect(range?.originalScope).toBe(undefined);
+  expect(range?.children?.length).toBe(2);
 
-  childRange = mergedGeneratedRanges.children?.[1];
+  let childRange = range?.children?.[0];
   expect(childRange?.start).toStrictEqual({ line: 1, column: 0 });
-  expect(childRange?.end).toStrictEqual({ line: 2, column: 19 });
-  expect(childRange?.originalScope).toBe(undefined);
-  expect(childRange?.children?.length).toBe(2);
+  expect(childRange?.end).toStrictEqual({ line: 1, column: 19 });
+  expect(childRange?.originalScope!.start).toStrictEqual(originalScopes2[0].start);
+  expect(childRange?.originalScope!.end).toStrictEqual(originalScopes2[0].end);
+  expect(childRange?.values).toStrictEqual([null]);
+  expect(childRange?.callSite).toBe(undefined);
+  expect(childRange?.children?.length).toBe(1);
 
   let grandchildRange = childRange?.children?.[0];
   expect(grandchildRange?.start).toStrictEqual({ line: 1, column: 0 });
   expect(grandchildRange?.end).toStrictEqual({ line: 1, column: 19 });
-  expect(grandchildRange?.originalScope).toBe(originalScopes2[0]);
-  expect(grandchildRange?.values).toStrictEqual([null]);
-  expect(grandchildRange?.callSite).toBe(undefined);
-  expect(grandchildRange?.children?.length).toBe(1);
+  expect(grandchildRange?.originalScope!.start).toStrictEqual(originalScopes2[0].children?.[0].start);
+  expect(grandchildRange?.originalScope!.end).toStrictEqual(originalScopes2[0].children?.[0].end);
+  expect(grandchildRange?.values).toStrictEqual(['"bar"']);
+  expect(grandchildRange?.callSite).toStrictEqual({ sourceIndex: 1, line: 3, column: 0 });
+  expect(grandchildRange?.children?.length).toBe(0);
 
-  let grandgrandchildRange = grandchildRange?.children?.[0];
-  expect(grandgrandchildRange?.start).toStrictEqual({ line: 1, column: 0 });
-  expect(grandgrandchildRange?.end).toStrictEqual({ line: 1, column: 19 });
-  expect(grandgrandchildRange?.originalScope).toBe(originalScopes2[0].children?.[0]);
-  expect(grandgrandchildRange?.values).toStrictEqual(['"bar"']);
-  expect(grandgrandchildRange?.callSite).toStrictEqual({ sourceIndex: 1, line: 3, column: 0 });
-  expect(grandgrandchildRange?.children?.length).toBe(0);
+  childRange = range?.children?.[1];
+  expect(childRange?.start).toStrictEqual({ line: 2, column: 0 });
+  expect(childRange?.end).toStrictEqual({ line: 2, column: 0 });
+  expect(childRange?.originalScope!.start).toStrictEqual(originalScopes2[1].start);
+  expect(childRange?.originalScope!.end).toStrictEqual(originalScopes2[1].end);
+  expect(childRange?.values).toStrictEqual([null]);
+  expect(childRange?.callSite).toBe(undefined);
+  expect(childRange?.children?.length).toBe(1);
 
-  grandchildRange = childRange?.children?.[1];
+  grandchildRange = childRange?.children?.[0];
   expect(grandchildRange?.start).toStrictEqual({ line: 2, column: 0 });
   expect(grandchildRange?.end).toStrictEqual({ line: 2, column: 0 });
-  expect(grandchildRange?.originalScope).toBe(originalScopes2[1]);
-  expect(grandchildRange?.values).toStrictEqual([null]);
-  expect(grandchildRange?.callSite).toBe(undefined);
-  expect(grandchildRange?.children?.length).toBe(1);
-
-  grandgrandchildRange = grandchildRange?.children?.[0];
-  expect(grandgrandchildRange?.start).toStrictEqual({ line: 2, column: 0 });
-  expect(grandgrandchildRange?.end).toStrictEqual({ line: 2, column: 0 });
-  expect(grandgrandchildRange?.originalScope).toBe(originalScopes2[0].children?.[0]);
-  expect(grandgrandchildRange?.values).toStrictEqual(['"baz"']);
-  expect(grandgrandchildRange?.callSite).toStrictEqual({ sourceIndex: 2, line: 1, column: 0 });
-  expect(grandgrandchildRange?.children?.length).toBe(0);
+  expect(grandchildRange?.originalScope!.start).toStrictEqual(originalScopes2[0].children?.[0].start);
+  expect(grandchildRange?.originalScope!.end).toStrictEqual(originalScopes2[0].children?.[0].end);
+  expect(grandchildRange?.values).toStrictEqual(['"baz"']);
+  expect(grandchildRange?.callSite).toStrictEqual({ sourceIndex: 2, line: 1, column: 0 });
+  expect(grandchildRange?.children?.length).toBe(0);
 });

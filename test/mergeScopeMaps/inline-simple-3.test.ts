@@ -1,3 +1,4 @@
+import { encode } from "@chrome-devtools/source-map-scopes-codec";
 import { GeneratedRange, OriginalScope } from "../../src/types";
 import { mergeScopeMaps } from "../../src/mergeScopeMaps";
 
@@ -135,56 +136,60 @@ const generatedRanges: GeneratedRange = {
   ],
 };
 
+const { scopes: sourceMap1Scopes, names: sourceMap1Names } = encode({ scopes: originalScopes, ranges: [intermediateGeneratedRanges] });
 const sourceMap1 = {
-  "version": 3 as 3,
-  "file": "intermediate.js",
-  "sources": ["original.js"],
-  "mappings": "AAAA;AACA;AACA;AADA;AAGA;AACA",
-  "names": [],
-  originalScopes,
-  generatedRanges: intermediateGeneratedRanges,
+  version: 3 as 3,
+  file: "intermediate.js",
+  sources: ["original.js"],
+  mappings: "AAAA;AACA;AACA;AADA;AAGA;AACA",
+  names: sourceMap1Names!,
+  scopes: sourceMap1Scopes!,
 };
 
+const { scopes: sourceMap2Scopes, names: sourceMap2Names } = encode({ scopes: intermediateOriginalScopes, ranges: [generatedRanges] });
 const sourceMap2 = {
-  "version": 3 as 3,
-  "file": "generated.js",
-  "sources": ["intermediate.js"],
-  "mappings": "AAAA;AACA;AACA;AACA;AAFA;AAIA",
-  "names": [],
-  originalScopes: intermediateOriginalScopes,
-  generatedRanges,
+  version: 3 as 3,
+  file: "generated.js",
+  sources: ["intermediate.js"],
+  mappings: "AAAA;AACA;AACA;AACA;AAFA;AAIA",
+  names: sourceMap2Names!,
+  scopes: sourceMap2Scopes!,
 };
 
 test("merged scope map", () => {
   const { generatedRanges: mergedGeneratedRanges } = mergeScopeMaps([sourceMap1], sourceMap2);
 
-  expect(mergedGeneratedRanges.start).toStrictEqual({ line: 0, column: 0 });
-  expect(mergedGeneratedRanges.end).toStrictEqual({ line: 5, column: 19 });
-  expect(mergedGeneratedRanges.originalScope).toBe(originalScopes[0]);
-  expect(mergedGeneratedRanges.values).toStrictEqual(["h"]);
-  expect(mergedGeneratedRanges.callSite).toBe(undefined);
-  expect(mergedGeneratedRanges.children?.length).toBe(3);
+  expect(mergedGeneratedRanges[0].start).toStrictEqual({ line: 0, column: 0 });
+  expect(mergedGeneratedRanges[0].end).toStrictEqual({ line: 5, column: 19 });
+  expect(mergedGeneratedRanges[0].originalScope!.start).toStrictEqual(originalScopes[0].start);
+  expect(mergedGeneratedRanges[0].originalScope!.end).toStrictEqual(originalScopes[0].end);
+  expect(mergedGeneratedRanges[0].values).toStrictEqual(["h"]);
+  expect(mergedGeneratedRanges[0].callSite).toBe(undefined);
+  expect(mergedGeneratedRanges[0].children?.length).toBe(3);
 
-  let childRange = mergedGeneratedRanges.children?.[0];
+  let childRange = mergedGeneratedRanges[0].children?.[0];
   expect(childRange?.start).toStrictEqual({ line: 0, column: 0 });
   expect(childRange?.end).toStrictEqual({ line: 2, column: 1 });
-  expect(childRange?.originalScope).toBe(originalScopes[0].children![0]);
+  expect(childRange?.originalScope!.start).toStrictEqual(originalScopes[0].children![0].start);
+  expect(childRange?.originalScope!.end).toStrictEqual(originalScopes[0].children![0].end);
   expect(childRange?.values).toStrictEqual(["z"]);
   expect(childRange?.callSite).toBe(undefined);
   expect(childRange?.children?.length).toBe(0);
 
-  childRange = mergedGeneratedRanges.children?.[1];
+  childRange = mergedGeneratedRanges[0].children?.[1];
   expect(childRange?.start).toStrictEqual({ line: 3, column: 0 });
   expect(childRange?.end).toStrictEqual({ line: 3, column: 0 });
-  expect(childRange?.originalScope).toBe(originalScopes[0].children![0]);
+  expect(childRange?.originalScope!.start).toStrictEqual(originalScopes[0].children![0].start);
+  expect(childRange?.originalScope!.end).toStrictEqual(originalScopes[0].children![0].end);
   expect(childRange?.values).toStrictEqual(['"foo"']);
   expect(childRange?.callSite).toStrictEqual({ sourceIndex: 0, line: 3, column: 0 });
   expect(childRange?.children?.length).toBe(0);
 
-  childRange = mergedGeneratedRanges.children?.[2];
+  childRange = mergedGeneratedRanges[0].children?.[2];
   expect(childRange?.start).toStrictEqual({ line: 4, column: 0 });
   expect(childRange?.end).toStrictEqual({ line: 4, column: 19 });
-  expect(childRange?.originalScope).toBe(originalScopes[0].children![0]);
+  expect(childRange?.originalScope!.start).toStrictEqual(originalScopes[0].children![0].start);
+  expect(childRange?.originalScope!.end).toStrictEqual(originalScopes[0].children![0].end);
   expect(childRange?.values).toStrictEqual(['"bar"']);
   expect(childRange?.callSite).toStrictEqual({ sourceIndex: 0, line: 4, column: 0 });
   expect(childRange?.children?.length).toBe(0);

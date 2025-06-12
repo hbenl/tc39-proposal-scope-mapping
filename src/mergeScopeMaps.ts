@@ -1,11 +1,10 @@
 import { EncodedSourceMap, TraceMap, eachMapping, originalPositionFor, generatedPositionFor } from "@jridgewell/trace-mapping";
-import type { Binding, SubRangeBinding } from "@chrome-devtools/source-map-scopes-codec";
+import { decode, Binding, SubRangeBinding } from "@chrome-devtools/source-map-scopes-codec";
 import { GeneratedRange, Location, LocationRange, OriginalScope } from "./types";
 import { assert, collectGeneratedRangeParents, collectGeneratedRangesByLocation, compareLocations, isBefore, isEqual, isInRange, isOverlapping, rangeKey } from "./util";
 
-export interface ScopeMap {
-  originalScopes: OriginalScope[];
-  generatedRanges: GeneratedRange;
+interface SourceMapWithScopes extends EncodedSourceMap {
+  scopes: string;
 }
 
 interface MergedRange {
@@ -22,34 +21,38 @@ interface MergedRange {
 // Current limitations:
 // - only simple binding expressions
 export function mergeScopeMaps(
-  sourceMaps1: (EncodedSourceMap & ScopeMap)[],
-  sourceMap2: EncodedSourceMap & ScopeMap
-): ScopeMap {
+  sourceMaps1: SourceMapWithScopes[],
+  sourceMap2: SourceMapWithScopes
+): { originalScopes: (OriginalScope | null)[], generatedRanges: GeneratedRange[] } {
+  const { scopes: sourceMap2Scopes, ranges: sourceMap2Ranges } = decode(sourceMap2);
   // generatedRangeParents contains GeneratedRanges in the generated
   // source which reference OriginalScopes in the intermediate source.
-  const generatedRangeParents = collectGeneratedRangeParents(sourceMap2.generatedRanges);
-  // intermediateGeneratedRangesByLocation contains GeneratedRanges in the intermediate
-  // source which reference OriginalScopes in the original source.
-  const intermediateGeneratedRangesByLocation = sourceMaps1.map(
-    sourceMap => collectGeneratedRangesByLocation(sourceMap.generatedRanges)
-  );
+  const generatedRangeParents = new Map<GeneratedRange, GeneratedRange>();
+  sourceMap2Ranges.forEach(range => collectGeneratedRangeParents(range, generatedRangeParents));
 
   // sourceIndicesForOriginalScopes maps the OriginalScopes in the
   // intermediate sources to their sourceIndices
   const sourceIndicesForOriginalScopes = new Map<OriginalScope, number>();
-  sourceMap2.originalScopes.forEach((originalScope, sourceIndex) => {
+  sourceMap2Scopes.forEach((originalScope, sourceIndex) => {
     function setSourceIndexForOriginalScope(originalScope: OriginalScope) {
       sourceIndicesForOriginalScopes.set(originalScope, sourceIndex);
       originalScope.children?.forEach(setSourceIndexForOriginalScope);
     }
-    setSourceIndexForOriginalScope(originalScope);
+    if (originalScope) {
+      setSourceIndexForOriginalScope(originalScope);
+    }
   });
 
-  const originalScopes: OriginalScope[] = [];
+  // intermediateGeneratedRangesByLocation contains GeneratedRanges in the intermediate
+  // source which reference OriginalScopes in the original source.
+  const intermediateGeneratedRangesByLocation: Map<string, GeneratedRange>[] = [];
+  const originalScopes: (OriginalScope | null)[] = [];
   const originalSourceOffsets: number[] = [];
   for (const sourceMap of sourceMaps1) {
+    const { scopes, ranges } = decode(sourceMap);
+    intermediateGeneratedRangesByLocation.push(collectGeneratedRangesByLocation(ranges));
     originalSourceOffsets.push(originalScopes.length);
-    originalScopes.push(...sourceMap.originalScopes);
+    originalScopes.push(...scopes);
   }
 
   const traceMaps1 = sourceMaps1.map(sourceMap => new TraceMap(sourceMap));
@@ -198,20 +201,9 @@ export function mergeScopeMaps(
     });
   }
 
-  const mergedRanges = applyScopeMapToGeneratedRange(sourceMap2.generatedRanges);
-  let generatedRanges = mergedRanges[0].mergedGeneratedRange;
-  if (mergedRanges.length > 1) {
-    generatedRanges = {
-      start: mergedRanges[0].mergedGeneratedRange.start,
-      end: mergedRanges[mergedRanges.length - 1].mergedGeneratedRange.end,
-      isStackFrame: false,
-      isHidden: false,
-      values: [],
-      children: mergedRanges.map(mergedRange => mergedRange.mergedGeneratedRange),
-    }
-  }
+  const mergedRanges = sourceMap2Ranges.flatMap(range => applyScopeMapToGeneratedRange(range));
 
-  return { originalScopes, generatedRanges };
+  return { originalScopes, generatedRanges: mergedRanges.map(mergedRange => mergedRange.mergedGeneratedRange) };
 }
 
 function findInlinedRanges(
