@@ -1,15 +1,13 @@
+import { originalPositionFor, TraceMap } from "@jridgewell/trace-mapping";
+import { GenMapping, addMapping, setSourceContent, toEncodedMap } from "@jridgewell/gen-mapping";
 import { encode, decode, SourceMapJson } from "@chrome-devtools/source-map-scopes-codec";
-import { GeneratedRange, Location, LocationRange, OriginalScope } from "./types";
+import { GeneratedRange, Location, LocationRange, OriginalLocation, OriginalScope } from "./types";
+import { SourceMapWithDecodedScopes } from "./getOriginalFrames";
 
 export function assert(condition: any): asserts condition {
   if (!condition) {
     throw new Error("Assertion failed");
   }
-}
-
-export function findLastIndex<T>(array: T[], predicate: (value: T) => boolean): number {
-  const reverseIndex = [...array].reverse().findIndex(predicate);
-  return reverseIndex >= 0 ? (array.length - 1) - reverseIndex : -1;
 }
 
 export function isEqual(loc1: Location, loc2: Location) {
@@ -51,16 +49,6 @@ export function compareLocations(loc1: Location, loc2: Location) {
 export interface ScopeItem<T extends OriginalScope | GeneratedRange> {
   kind: "start" | "end";
   scope: T;
-}
-
-export function getScopeItems<T extends OriginalScope | GeneratedRange>(scope: T): ScopeItem<T>[] {
-  const children = (scope.children as T[] | undefined) ?? [];
-  const childItems = children.flatMap(getScopeItems);
-  return [
-    { kind: "start", scope },
-    ...childItems,
-    { kind: "end", scope },
-  ]
 }
 
 export function collectGeneratedRangeParents(
@@ -126,5 +114,82 @@ function removeParentsFromRanges(range: GeneratedRange): GeneratedRange {
 export function addDecodedScopes(sourcemap: SourceMapJson) {
   const { scopes: originalScopes, ranges: generatedRanges } = decode(sourcemap);
   (sourcemap as any).originalScopes = originalScopes;
-  (sourcemap as any).generatedRanges = generatedRanges[0];
+  (sourcemap as any).generatedRanges = generatedRanges;
+}
+
+export function addParentsToScopes(scope: OriginalScope) {
+  for (const child of scope.children ?? []) {
+    child.parent = scope;
+    addParentsToScopes(child);
+  }
+}
+
+export function addParentsToRanges(range: GeneratedRange) {
+  for (const child of range.children) {
+    child.parent = range;
+    addParentsToRanges(child);
+  }
+}
+
+export function addParents(originalScopes: (OriginalScope | null)[], generatedRanges: GeneratedRange[]) {
+  for (const scope of originalScopes) {
+    if (scope) {
+      addParentsToScopes(scope);
+    }
+  }
+  for (const range of generatedRanges) {
+    addParentsToRanges(range);
+  }
+}
+
+interface Mapping {
+  original: OriginalLocation;
+  generated: Location;
+}
+
+export function createSourceMapWithScopes(
+  mappings: Mapping[],
+  encodedScopes: string,
+  scopeNames: string[],
+  sources = ["original.js"],
+): SourceMapWithDecodedScopes {
+  const genMap = new GenMapping();
+  for (const source of sources) {
+    setSourceContent(genMap, source, null);
+  }
+  for (const mapping of mappings) {
+    addMapping(genMap, {
+      original: {
+        line: mapping.original.line + 1,
+        column: mapping.original.column,
+      },
+      generated: {
+        line: mapping.generated.line + 1,
+        column: mapping.generated.column,
+      },
+      source: sources[mapping.original.sourceIndex],
+    });
+  }
+  const sourceMap = {
+    ...toEncodedMap(genMap),
+    names: scopeNames,
+    sources,
+    sourcesContent: [],
+    ignoreList: undefined,
+    scopes: encodedScopes,
+  };
+  addDecodedScopes(sourceMap);
+  return sourceMap as any as SourceMapWithDecodedScopes;
+}
+
+export function getOriginalLocation(traceMap: TraceMap, originalSources: string[], generatedLocation: Location): OriginalLocation | null {
+  const originalMapping = originalPositionFor(traceMap, { ...generatedLocation, line: generatedLocation.line + 1 });
+  if (!originalMapping.source) {
+    return null;
+  }
+  return {
+    sourceIndex: originalSources.indexOf(originalMapping.source),
+    line: originalMapping.line - 1,
+    column: originalMapping.column,
+  };
 }

@@ -1,6 +1,6 @@
 import { getOriginalFrames } from "../../src/getOriginalFrames";
 import { OriginalScope, GeneratedRange, GeneratedDebuggerScope } from "../../src/types";
-import { decodeScopes, encodeScopes } from "../../src/util";
+import { createSourceMapWithScopes, decodeScopes, encodeScopes } from "../../src/util";
 
 /**
 Taken from https://szuend.github.io/scope-proposal-examples/04_inline_into_function/inline_into_function.html
@@ -127,6 +127,15 @@ const generatedRanges: GeneratedRange[] = [{
   ]
 }];
 
+const sourceMap = createSourceMapWithScopes(
+  [{
+    original: { sourceIndex: 0, line: 3, column: 2 },
+    generated: { line: 0, column: 70 },
+  }],
+  encodedScopes,
+  scopeNames
+);
+
 test("decode scopes from sourcemap", () => {
   const { scopes, ranges } = decodeScopes(encodedScopes, scopeNames);
   expect(scopes).toStrictEqual(originalScopes);
@@ -142,11 +151,12 @@ test("encode scopes to sourcemap", () => {
 test("original frames at column 71", () => {
   const debuggerScopes: GeneratedDebuggerScope[] = [
     {
-      // The global scope, we only show one example binding
-      start: generatedRanges[0].start,
-      end: generatedRanges[0].end,
+      // The function scope
+      start: generatedRanges[0].children[0].start,
+      end: generatedRanges[0].children[0].end,
       bindings: [
-        { varname: "document", value: { objectId: 1 }}
+        { varname: "c", value: { value: 42 } },
+        { varname: "b", value: { value: true }},
       ]
     },
     {
@@ -158,22 +168,19 @@ test("original frames at column 71", () => {
       ]
     },
     {
-      // The function scope
-      start: generatedRanges[0].children[0].start,
-      end: generatedRanges[0].children[0].end,
+      // The global scope, we only show one example binding
+      start: generatedRanges[0].start,
+      end: generatedRanges[0].end,
       bindings: [
-        { varname: "c", value: { value: 42 } },
-        { varname: "b", value: { value: true }},
+        { varname: "document", value: { objectId: 1 }}
       ]
     },
   ];
-  expect(getOriginalFrames(
-    { line: 0, column: 70 },
-    { sourceIndex: 0, line: 3, column: 2 },
-    generatedRanges,
-    originalScopes,
-    debuggerScopes
-  )).toMatchInlineSnapshot(`
+  expect(getOriginalFrames(sourceMap, [{
+  location: { line: 0, column: 70 },
+  scopes: debuggerScopes
+}])).
+toMatchInlineSnapshot(`
 [
   {
     "location": {
@@ -187,9 +194,9 @@ test("original frames at column 71", () => {
         "bindings": [
           {
             "value": {
-              "objectId": 1,
+              "value": 42,
             },
-            "varname": "document",
+            "varname": "x",
           },
         ],
       },
@@ -225,9 +232,9 @@ test("original frames at column 71", () => {
         "bindings": [
           {
             "value": {
-              "value": 42,
+              "objectId": 1,
             },
-            "varname": "x",
+            "varname": "document",
           },
         ],
       },
@@ -245,9 +252,9 @@ test("original frames at column 71", () => {
         "bindings": [
           {
             "value": {
-              "objectId": 1,
+              "value": 42,
             },
-            "varname": "document",
+            "varname": "x",
           },
         ],
       },
@@ -283,9 +290,9 @@ test("original frames at column 71", () => {
         "bindings": [
           {
             "value": {
-              "value": 42,
+              "objectId": 1,
             },
-            "varname": "x",
+            "varname": "document",
           },
         ],
       },
@@ -297,45 +304,10 @@ test("original frames at column 71", () => {
       "line": 14,
       "sourceIndex": 0,
     },
-    "name": undefined,
+    "name": "outer",
     "scopes": [
       {
-        "bindings": [
-          {
-            "value": {
-              "objectId": 1,
-            },
-            "varname": "document",
-          },
-        ],
-      },
-      {
-        "bindings": [
-          {
-            "value": {
-              "value": 0.5,
-            },
-            "varname": "CALL_CHANCE",
-          },
-          {
-            "value": {
-              "unavailable": true,
-            },
-            "varname": "log",
-          },
-          {
-            "value": {
-              "unavailable": true,
-            },
-            "varname": "inner",
-          },
-          {
-            "value": {
-              "objectId": 2,
-            },
-            "varname": "outer",
-          },
-        ],
+        "bindings": [],
       },
       {
         "bindings": [
@@ -354,7 +326,42 @@ test("original frames at column 71", () => {
         ],
       },
       {
-        "bindings": [],
+        "bindings": [
+          {
+            "value": {
+              "value": 0.5,
+            },
+            "varname": "CALL_CHANCE",
+          },
+          {
+            "value": {
+              "unavailable": true,
+            },
+            "varname": "log",
+          },
+          {
+            "value": {
+              "unavailable": true,
+            },
+            "varname": "inner",
+          },
+          {
+            "value": {
+              "objectId": 2,
+            },
+            "varname": "outer",
+          },
+        ],
+      },
+      {
+        "bindings": [
+          {
+            "value": {
+              "objectId": 1,
+            },
+            "varname": "document",
+          },
+        ],
       },
     ],
   },

@@ -1,6 +1,6 @@
 import { getOriginalFrames } from "../../src/getOriginalFrames";
 import { OriginalScope, GeneratedRange, GeneratedDebuggerScope } from "../../src/types";
-import { decodeScopes, encodeScopes } from "../../src/util";
+import { createSourceMapWithScopes, decodeScopes, encodeScopes } from "../../src/util";
 
 /**
 Original source:
@@ -86,6 +86,18 @@ const generatedRanges: GeneratedRange[] = [{
   ],
 }];
 
+const sourceMap = createSourceMapWithScopes(
+  [{
+    original: { sourceIndex: 0, line: 1, column: 2 },
+    generated: { line: 0, column: 0 },
+  }, {
+    original: { sourceIndex: 0, line: 1, column: 2 },
+    generated: { line: 1, column: 0 },
+  }],
+  encodedScopes,
+  scopeNames
+);
+
 test("decode scopes from sourcemap", () => {
   const { scopes, ranges } = decodeScopes(encodedScopes, scopeNames);
   expect(scopes).toStrictEqual(originalScopes);
@@ -104,25 +116,23 @@ test("original frames at line 1", () => {
       start: generatedRanges[0].start,
       end: generatedRanges[0].end,
       bindings: [
-        { varname: "document", value: { objectId: 1 } }
+        { varname: "log", value: { objectId: 2 } },
+        { varname: "x", value: { value: "foo" } },
       ],
     },
     {
       start: generatedRanges[0].start,
       end: generatedRanges[0].end,
       bindings: [
-        { varname: "log", value: { objectId: 2 } },
-        { varname: "x", value: { value: "foo" } },
+        { varname: "document", value: { objectId: 1 } }
       ],
     },
   ];
-  expect(getOriginalFrames(
-    { line: 0, column: 0 },
-    { sourceIndex: 0, line: 1, column: 2 },
-    generatedRanges,
-    originalScopes,
-    debuggerScopes
-  )).toMatchInlineSnapshot(`
+  expect(getOriginalFrames(sourceMap, [{
+    location: { line: 0, column: 0 },
+    scopes: debuggerScopes,
+  }]))
+  .toMatchInlineSnapshot(`
 [
   {
     "location": {
@@ -136,9 +146,9 @@ test("original frames at line 1", () => {
         "bindings": [
           {
             "value": {
-              "objectId": 1,
+              "value": "foo",
             },
-            "varname": "document",
+            "varname": "msg",
           },
         ],
       },
@@ -162,9 +172,9 @@ test("original frames at line 1", () => {
         "bindings": [
           {
             "value": {
-              "value": "foo",
+              "objectId": 1,
             },
-            "varname": "msg",
+            "varname": "document",
           },
         ],
       },
@@ -182,16 +192,6 @@ test("original frames at line 1", () => {
         "bindings": [
           {
             "value": {
-              "objectId": 1,
-            },
-            "varname": "document",
-          },
-        ],
-      },
-      {
-        "bindings": [
-          {
-            "value": {
               "unavailable": true,
             },
             "varname": "log",
@@ -204,6 +204,16 @@ test("original frames at line 1", () => {
           },
         ],
       },
+      {
+        "bindings": [
+          {
+            "value": {
+              "objectId": 1,
+            },
+            "varname": "document",
+          },
+        ],
+      },
     ],
   },
 ]
@@ -213,14 +223,6 @@ test("original frames at line 1", () => {
 test("original frames at line 2", () => {
   const debuggerScopes: GeneratedDebuggerScope[] = [
     {
-      // The global scope, we only show one example binding
-      start: generatedRanges[0].start,
-      end: generatedRanges[0].end,
-      bindings: [
-        { varname: "document", value: { objectId: 1 } },
-      ],
-    },
-    {
       // The module scope
       start: generatedRanges[0].start,
       end: generatedRanges[0].end,
@@ -229,14 +231,20 @@ test("original frames at line 2", () => {
         { varname: "x", value: { value: "bar" }}
       ],
     },
+    {
+      // The global scope, we only show one example binding
+      start: generatedRanges[0].start,
+      end: generatedRanges[0].end,
+      bindings: [
+        { varname: "document", value: { objectId: 1 } },
+      ],
+    },
   ];
-  expect(getOriginalFrames(
-    { line: 1, column: 0 },
-    { sourceIndex: 0, line: 1, column: 2 },
-    generatedRanges,
-    originalScopes,
-    debuggerScopes
-  )).toMatchInlineSnapshot(`
+  expect(getOriginalFrames(sourceMap, [{
+    location: { line: 1, column: 0 },
+    scopes: debuggerScopes,
+  }]))
+  .toMatchInlineSnapshot(`
 [
   {
     "location": {
@@ -250,9 +258,9 @@ test("original frames at line 2", () => {
         "bindings": [
           {
             "value": {
-              "objectId": 1,
+              "value": "bar",
             },
-            "varname": "document",
+            "varname": "msg",
           },
         ],
       },
@@ -276,9 +284,9 @@ test("original frames at line 2", () => {
         "bindings": [
           {
             "value": {
-              "value": "bar",
+              "objectId": 1,
             },
-            "varname": "msg",
+            "varname": "document",
           },
         ],
       },
@@ -296,16 +304,6 @@ test("original frames at line 2", () => {
         "bindings": [
           {
             "value": {
-              "objectId": 1,
-            },
-            "varname": "document",
-          },
-        ],
-      },
-      {
-        "bindings": [
-          {
-            "value": {
               "unavailable": true,
             },
             "varname": "log",
@@ -315,6 +313,16 @@ test("original frames at line 2", () => {
               "value": "bar",
             },
             "varname": "x",
+          },
+        ],
+      },
+      {
+        "bindings": [
+          {
+            "value": {
+              "objectId": 1,
+            },
+            "varname": "document",
           },
         ],
       },

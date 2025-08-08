@@ -1,6 +1,6 @@
 import { getOriginalFrames } from "../../src/getOriginalFrames";
 import { OriginalScope, GeneratedRange, GeneratedDebuggerScope } from "../../src/types";
-import { decodeScopes, encodeScopes } from "../../src/util";
+import { createSourceMapWithScopes, decodeScopes, encodeScopes } from "../../src/util";
 
 /*
 Original source:
@@ -98,6 +98,18 @@ const generatedRanges: GeneratedRange[] = [{
   ]
 }];
 
+const sourceMap = createSourceMapWithScopes(
+  [{
+    original: { sourceIndex: 0, line: 4, column: 2 },
+    generated: { line: 0, column: 0 },
+  }, {
+    original: { sourceIndex: 0, line: 2, column: 18 },
+    generated: { line: 0, column: 12 },
+  }],
+  encodedScopes,
+  scopeNames
+);
+
 test("decode scopes from sourcemap", () => {
   const { scopes, ranges } = decodeScopes(encodedScopes, scopeNames);
   expect(scopes).toStrictEqual(originalScopes);
@@ -113,6 +125,12 @@ test("encode scopes to sourcemap", () => {
 test("original frames at line 0, column 0", () => {
   const debuggerScopes: GeneratedDebuggerScope[] = [
     {
+      // The module scope
+      start: generatedRanges[0].start,
+      end: generatedRanges[0].end,
+      bindings: []
+    },
+    {
       // The global scope, we only show one example binding
       start: generatedRanges[0].start,
       end: generatedRanges[0].end,
@@ -120,20 +138,12 @@ test("original frames at line 0, column 0", () => {
         { varname: "document", value: { objectId: 1 }}
       ]
     },
-    {
-      // The module scope
-      start: generatedRanges[0].start,
-      end: generatedRanges[0].end,
-      bindings: []
-    }
   ];
-  expect(getOriginalFrames(
-  { line: 0, column: 0 },
-  { sourceIndex: 0, line: 4, column: 2 },
-  generatedRanges,
-  originalScopes,
-  debuggerScopes
-)).toMatchInlineSnapshot(`
+  expect(getOriginalFrames(sourceMap, [{
+  location: { line: 0, column: 0 },
+  scopes: debuggerScopes
+}])).
+toMatchInlineSnapshot(`
 [
   {
     "location": {
@@ -147,25 +157,9 @@ test("original frames at line 0, column 0", () => {
         "bindings": [
           {
             "value": {
-              "objectId": 1,
-            },
-            "varname": "document",
-          },
-        ],
-      },
-      {
-        "bindings": [
-          {
-            "value": {
-              "value": 2,
+              "value": 3,
             },
             "varname": "n",
-          },
-          {
-            "value": {
-              "unavailable": true,
-            },
-            "varname": "f",
           },
         ],
       },
@@ -189,9 +183,25 @@ test("original frames at line 0, column 0", () => {
         "bindings": [
           {
             "value": {
-              "value": 3,
+              "value": 2,
             },
             "varname": "n",
+          },
+          {
+            "value": {
+              "unavailable": true,
+            },
+            "varname": "f",
+          },
+        ],
+      },
+      {
+        "bindings": [
+          {
+            "value": {
+              "objectId": 1,
+            },
+            "varname": "document",
           },
         ],
       },
@@ -209,16 +219,6 @@ test("original frames at line 0, column 0", () => {
         "bindings": [
           {
             "value": {
-              "objectId": 1,
-            },
-            "varname": "document",
-          },
-        ],
-      },
-      {
-        "bindings": [
-          {
-            "value": {
               "value": 2,
             },
             "varname": "n",
@@ -231,6 +231,16 @@ test("original frames at line 0, column 0", () => {
           },
         ],
       },
+      {
+        "bindings": [
+          {
+            "value": {
+              "objectId": 1,
+            },
+            "varname": "document",
+          },
+        ],
+      },
     ],
   },
 ]
@@ -240,6 +250,12 @@ test("original frames at line 0, column 0", () => {
 test("original frames at line 0, column 12", () => {
   const debuggerScopes: GeneratedDebuggerScope[] = [
     {
+      // The module scope
+      start: generatedRanges[0].start,
+      end: generatedRanges[0].end,
+      bindings: []
+    },
+    {
       // The global scope, we only show one example binding
       start: generatedRanges[0].start,
       end: generatedRanges[0].end,
@@ -247,20 +263,12 @@ test("original frames at line 0, column 12", () => {
         { varname: "document", value: { objectId: 1 }}
       ]
     },
-    {
-      // The module scope
-      start: generatedRanges[0].start,
-      end: generatedRanges[0].end,
-      bindings: []
-    }
   ];
-  expect(getOriginalFrames(
-    { line: 0, column: 12 },
-    { sourceIndex: 0, line: 2, column: 18 },
-    generatedRanges,
-    originalScopes,
-    debuggerScopes
-  )).toMatchInlineSnapshot(`
+  expect(getOriginalFrames(sourceMap, [{
+  location: { line: 0, column: 12 },
+  scopes: debuggerScopes
+}])).
+toMatchInlineSnapshot(`
 [
   {
     "location": {
@@ -274,9 +282,15 @@ test("original frames at line 0, column 12", () => {
         "bindings": [
           {
             "value": {
-              "objectId": 1,
+              "value": 1,
             },
-            "varname": "document",
+            "varname": "x",
+          },
+          {
+            "value": {
+              "unavailable": true,
+            },
+            "varname": "y",
           },
         ],
       },
@@ -300,15 +314,9 @@ test("original frames at line 0, column 12", () => {
         "bindings": [
           {
             "value": {
-              "value": 1,
+              "objectId": 1,
             },
-            "varname": "x",
-          },
-          {
-            "value": {
-              "unavailable": true,
-            },
-            "varname": "y",
+            "varname": "document",
           },
         ],
       },
@@ -326,16 +334,6 @@ test("original frames at line 0, column 12", () => {
         "bindings": [
           {
             "value": {
-              "objectId": 1,
-            },
-            "varname": "document",
-          },
-        ],
-      },
-      {
-        "bindings": [
-          {
-            "value": {
               "value": 2,
             },
             "varname": "n",
@@ -345,6 +343,16 @@ test("original frames at line 0, column 12", () => {
               "unavailable": true,
             },
             "varname": "f",
+          },
+        ],
+      },
+      {
+        "bindings": [
+          {
+            "value": {
+              "objectId": 1,
+            },
+            "varname": "document",
           },
         ],
       },

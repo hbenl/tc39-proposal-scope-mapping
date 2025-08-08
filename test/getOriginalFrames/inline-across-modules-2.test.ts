@@ -1,6 +1,6 @@
 import { getOriginalFrames } from "../../src/getOriginalFrames";
 import { OriginalScope, GeneratedRange, GeneratedDebuggerScope } from "../../src/types";
-import { decodeScopes, encodeScopes } from "../../src/util";
+import { createSourceMapWithScopes, decodeScopes, encodeScopes } from "../../src/util";
 
 /**
 Taken from https://github.com/tc39/source-map-rfc/issues/61
@@ -184,6 +184,18 @@ const generatedRanges: GeneratedRange[] = [{
   ]
 }];
 
+const sourceMap = createSourceMapWithScopes(
+  [{
+    original: { sourceIndex: 0, line: 4, column: 4 },
+    generated: { line: 0, column: 0 },
+  }, {
+    original: { sourceIndex: 0, line: 4, column: 4 },
+    generated: { line: 0, column: 17 },
+  }],
+  encodedScopes,
+  scopeNames
+);
+
 test("decode scopes from sourcemap", () => {
   const { scopes, ranges } = decodeScopes(encodedScopes, scopeNames);
   expect(scopes).toStrictEqual(originalScopes);
@@ -199,6 +211,13 @@ test("encode scopes to sourcemap", () => {
 test("original frames at column 1", () => {
   const debuggerScopes: GeneratedDebuggerScope[] = [
     {
+      // The module scope
+      start: generatedRanges[0].start,
+      end: generatedRanges[0].end,
+      bindings: [
+      ]
+    },
+    {
       // The global scope, we only show one example binding
       start: generatedRanges[0].start,
       end: generatedRanges[0].end,
@@ -206,21 +225,12 @@ test("original frames at column 1", () => {
         { varname: "document", value: { objectId: 1 }}
       ]
     },
-    {
-      // The module scope
-      start: generatedRanges[0].start,
-      end: generatedRanges[0].end,
-      bindings: [
-      ]
-    },
   ];
-  expect(getOriginalFrames(
-    { line: 0, column: 0 },
-    { sourceIndex: 0, line: 4, column: 4 },
-    generatedRanges,
-    originalScopes,
-    debuggerScopes
-  )).toMatchInlineSnapshot(`
+  expect(getOriginalFrames(sourceMap, [{
+  location: { line: 0, column: 0 },
+  scopes: debuggerScopes
+}])).
+toMatchInlineSnapshot(`
 [
   {
     "location": {
@@ -234,9 +244,9 @@ test("original frames at column 1", () => {
         "bindings": [
           {
             "value": {
-              "objectId": 1,
+              "value": 42,
             },
-            "varname": "document",
+            "varname": "x",
           },
         ],
       },
@@ -260,9 +270,9 @@ test("original frames at column 1", () => {
         "bindings": [
           {
             "value": {
-              "value": 42,
+              "objectId": 1,
             },
-            "varname": "x",
+            "varname": "document",
           },
         ],
       },
@@ -280,9 +290,9 @@ test("original frames at column 1", () => {
         "bindings": [
           {
             "value": {
-              "objectId": 1,
+              "value": 42,
             },
-            "varname": "document",
+            "varname": "x",
           },
         ],
       },
@@ -312,9 +322,9 @@ test("original frames at column 1", () => {
         "bindings": [
           {
             "value": {
-              "value": 42,
+              "objectId": 1,
             },
-            "varname": "x",
+            "varname": "document",
           },
         ],
       },
@@ -332,9 +342,9 @@ test("original frames at column 1", () => {
         "bindings": [
           {
             "value": {
-              "objectId": 1,
+              "value": 42,
             },
-            "varname": "document",
+            "varname": "x",
           },
         ],
       },
@@ -364,9 +374,9 @@ test("original frames at column 1", () => {
         "bindings": [
           {
             "value": {
-              "value": 42,
+              "objectId": 1,
             },
-            "varname": "x",
+            "varname": "document",
           },
         ],
       },
@@ -384,16 +394,6 @@ test("original frames at column 1", () => {
         "bindings": [
           {
             "value": {
-              "objectId": 1,
-            },
-            "varname": "document",
-          },
-        ],
-      },
-      {
-        "bindings": [
-          {
-            "value": {
               "unavailable": true,
             },
             "varname": "Logger",
@@ -412,6 +412,16 @@ test("original frames at column 1", () => {
           },
         ],
       },
+      {
+        "bindings": [
+          {
+            "value": {
+              "objectId": 1,
+            },
+            "varname": "document",
+          },
+        ],
+      },
     ],
   },
 ]
@@ -421,6 +431,13 @@ test("original frames at column 1", () => {
 test("original frames at column 18", () => {
   const debuggerScopes: GeneratedDebuggerScope[] = [
     {
+      // The module scope
+      start: generatedRanges[0].start,
+      end: generatedRanges[0].end,
+      bindings: [
+      ]
+    },
+    {
       // The global scope, we only show one example binding
       start: generatedRanges[0].start,
       end: generatedRanges[0].end,
@@ -428,21 +445,12 @@ test("original frames at column 18", () => {
         { varname: "document", value: { objectId: 1 }}
       ]
     },
-    {
-      // The module scope
-      start: generatedRanges[0].start,
-      end: generatedRanges[0].end,
-      bindings: [
-      ]
-    },
   ];
-  expect(getOriginalFrames(
-    { line: 0, column: 17 },
-    { sourceIndex: 0, line: 4, column: 4 },
-    generatedRanges,
-    originalScopes,
-    debuggerScopes
-  )).toMatchInlineSnapshot(`
+  expect(getOriginalFrames(sourceMap, [{
+  location: { line: 0, column: 17 },
+  scopes: debuggerScopes
+}])).
+toMatchInlineSnapshot(`
 [
   {
     "location": {
@@ -456,9 +464,9 @@ test("original frames at column 18", () => {
         "bindings": [
           {
             "value": {
-              "objectId": 1,
+              "value": null,
             },
-            "varname": "document",
+            "varname": "x",
           },
         ],
       },
@@ -482,9 +490,9 @@ test("original frames at column 18", () => {
         "bindings": [
           {
             "value": {
-              "value": null,
+              "objectId": 1,
             },
-            "varname": "x",
+            "varname": "document",
           },
         ],
       },
@@ -502,9 +510,9 @@ test("original frames at column 18", () => {
         "bindings": [
           {
             "value": {
-              "objectId": 1,
+              "value": null,
             },
-            "varname": "document",
+            "varname": "x",
           },
         ],
       },
@@ -534,9 +542,9 @@ test("original frames at column 18", () => {
         "bindings": [
           {
             "value": {
-              "value": null,
+              "objectId": 1,
             },
-            "varname": "x",
+            "varname": "document",
           },
         ],
       },
@@ -554,9 +562,9 @@ test("original frames at column 18", () => {
         "bindings": [
           {
             "value": {
-              "objectId": 1,
+              "value": null,
             },
-            "varname": "document",
+            "varname": "x",
           },
         ],
       },
@@ -586,9 +594,9 @@ test("original frames at column 18", () => {
         "bindings": [
           {
             "value": {
-              "value": null,
+              "objectId": 1,
             },
-            "varname": "x",
+            "varname": "document",
           },
         ],
       },
@@ -606,16 +614,6 @@ test("original frames at column 18", () => {
         "bindings": [
           {
             "value": {
-              "objectId": 1,
-            },
-            "varname": "document",
-          },
-        ],
-      },
-      {
-        "bindings": [
-          {
-            "value": {
               "unavailable": true,
             },
             "varname": "Logger",
@@ -631,6 +629,16 @@ test("original frames at column 18", () => {
               "unavailable": true,
             },
             "varname": "outer",
+          },
+        ],
+      },
+      {
+        "bindings": [
+          {
+            "value": {
+              "objectId": 1,
+            },
+            "varname": "document",
           },
         ],
       },
