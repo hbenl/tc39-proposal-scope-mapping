@@ -1,7 +1,9 @@
 import { minify } from "terser";
+import remapping, { EncodedSourceMap } from "@ampproject/remapping";
 import { mergeScopeMaps } from "../../src/mergeScopeMaps";
-import { GeneratedDebuggerScope, OriginalScope } from "../../src/types";
+import { GeneratedDebuggerScope } from "../../src/types";
 import { getOriginalFrames } from "../../src/getOriginalFrames";
+import { addParents } from "../../src/util";
 
 const originalSource = `
 function f1(x) {
@@ -15,7 +17,7 @@ f1("world");
 
 async function transpile() {
   const { code: intermediateSource, map: sourceMap1 } = await minify(
-    originalSource,
+    { "original.js": originalSource },
     {
       compress: true,
       mangle: true,
@@ -27,7 +29,7 @@ async function transpile() {
   );
 
   const { code: generatedSource, map: sourceMap2 } = await minify(
-    intermediateSource!,
+    { "intermediate.js": intermediateSource! },
     {
       compress: {
         toplevel: true,
@@ -40,7 +42,9 @@ async function transpile() {
     }
   );
 
-  return { intermediateSource, generatedSource, ...mergeScopeMaps([sourceMap1 as any], sourceMap2 as any) };
+  const { originalScopes, generatedRanges } = mergeScopeMaps([sourceMap1 as any], sourceMap2 as any);
+  addParents(originalScopes, generatedRanges);
+  return { sourceMap1, sourceMap2, intermediateSource, generatedSource, originalScopes, generatedRanges };
 }
 
 test("generated sources and merged scope map", async () => {
@@ -88,16 +92,17 @@ test("generated sources and merged scope map", async () => {
 });
 
 test("original frames at column 42", async () => {
-  const { generatedRanges, originalScopes } = await transpile();
+  const { sourceMap1, sourceMap2, generatedRanges, originalScopes } = await transpile();
+  const sourceMap = {
+    ...remapping(sourceMap2 as EncodedSourceMap, (file) => {
+      if (file === "intermediate.js") {
+        return sourceMap1 as EncodedSourceMap;
+      }
+    }) as EncodedSourceMap,
+    generatedRanges,
+    originalScopes,
+  };
   const debuggerScopes: GeneratedDebuggerScope[] = [
-    {
-      // The global scope, we only show one example binding
-      start: generatedRanges[0].start,
-      end: generatedRanges[0].end,
-      bindings: [
-        { varname: "document", value: { objectId: 1 }}
-      ]
-    },
     {
       // The module scope
       start: generatedRanges[0].start,
@@ -106,18 +111,24 @@ test("original frames at column 42", async () => {
         { varname: "l", value: { value: "dear world" }}
       ]
     },
+    {
+      // The global scope, we only show one example binding
+      start: generatedRanges[0].start,
+      end: generatedRanges[0].end,
+      bindings: [
+        { varname: "document", value: { objectId: 1 }}
+      ]
+    },
   ];
-  expect(getOriginalFrames(
-    { line: 0, column: 41 },
-    { sourceIndex: 0, line: 3, column: 12 },
-    generatedRanges,
-    originalScopes as OriginalScope[],
-    debuggerScopes
-  )).toMatchInlineSnapshot(`
+  expect(getOriginalFrames(sourceMap, [{
+    location: { line: 0, column: 41 },
+    scopes: debuggerScopes,
+  }]))
+  .toMatchInlineSnapshot(`
 [
   {
     "location": {
-      "column": 12,
+      "column": 16,
       "line": 3,
       "sourceIndex": 0,
     },
@@ -127,19 +138,9 @@ test("original frames at column 42", async () => {
         "bindings": [
           {
             "value": {
-              "objectId": 1,
+              "value": "dear world",
             },
-            "varname": "document",
-          },
-        ],
-      },
-      {
-        "bindings": [
-          {
-            "value": {
-              "unavailable": true,
-            },
-            "varname": "f1",
+            "varname": "y",
           },
         ],
       },
@@ -163,9 +164,19 @@ test("original frames at column 42", async () => {
         "bindings": [
           {
             "value": {
-              "value": "dear world",
+              "unavailable": true,
             },
-            "varname": "y",
+            "varname": "f1",
+          },
+        ],
+      },
+      {
+        "bindings": [
+          {
+            "value": {
+              "objectId": 1,
+            },
+            "varname": "document",
           },
         ],
       },
@@ -183,9 +194,15 @@ test("original frames at column 42", async () => {
         "bindings": [
           {
             "value": {
-              "objectId": 1,
+              "value": "world",
             },
-            "varname": "document",
+            "varname": "x",
+          },
+          {
+            "value": {
+              "unavailable": true,
+            },
+            "varname": "f2",
           },
         ],
       },
@@ -203,15 +220,9 @@ test("original frames at column 42", async () => {
         "bindings": [
           {
             "value": {
-              "value": "world",
+              "objectId": 1,
             },
-            "varname": "x",
-          },
-          {
-            "value": {
-              "unavailable": true,
-            },
-            "varname": "f2",
+            "varname": "document",
           },
         ],
       },
@@ -229,9 +240,9 @@ test("original frames at column 42", async () => {
         "bindings": [
           {
             "value": {
-              "objectId": 1,
+              "unavailable": true,
             },
-            "varname": "document",
+            "varname": "f1",
           },
         ],
       },
@@ -239,9 +250,9 @@ test("original frames at column 42", async () => {
         "bindings": [
           {
             "value": {
-              "unavailable": true,
+              "objectId": 1,
             },
-            "varname": "f1",
+            "varname": "document",
           },
         ],
       },

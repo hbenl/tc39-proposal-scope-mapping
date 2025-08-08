@@ -37,6 +37,11 @@ export interface OriginalDebuggerScope {
   bindings: DebuggerScopeBinding[];
 }
 
+export interface GeneratedDebuggerFrame {
+  location: Location;
+  scopes: GeneratedDebuggerScope[];
+}
+
 export interface DebuggerFrame {
   name?: string;
   location: OriginalLocation;

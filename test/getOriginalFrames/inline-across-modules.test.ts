@@ -1,6 +1,6 @@
 import { getOriginalFrames } from "../../src/getOriginalFrames";
 import { OriginalScope, GeneratedRange, GeneratedDebuggerScope } from "../../src/types";
-import { decodeScopes, encodeScopes } from "../../src/util";
+import { createSourceMapWithScopes, decodeScopes, encodeScopes } from "../../src/util";
 
 /**
 Taken from https://github.com/tc39/source-map-rfc/issues/37#issuecomment-1777452640
@@ -95,6 +95,16 @@ const generatedRanges: GeneratedRange[] = [{
   ]
 }];
 
+const sourceMap = createSourceMapWithScopes(
+  [{
+    original: { sourceIndex: 1, line: 2, column: 2 },
+    generated: { line: 4, column: 0 },
+  }],
+  encodedScopes,
+  scopeNames,
+  ["one.js", "two.js"],
+);
+
 test("decode scopes from sourcemap", () => {
   const { scopes, ranges } = decodeScopes(encodedScopes, scopeNames);
   expect(scopes).toStrictEqual(originalScopes);
@@ -110,14 +120,6 @@ test("encode scopes to sourcemap", () => {
 test("original frames at line 5", () => {
   const debuggerScopes: GeneratedDebuggerScope[] = [
     {
-      // The global scope, we only show the binding introduced by our code
-      start: generatedRanges[0].start,
-      end: generatedRanges[0].end,
-      bindings: [
-        { varname: "e", value: { value: 42 }}
-      ]
-    },
-    {
       // The module scope
       start: generatedRanges[0].start,
       end: generatedRanges[0].end,
@@ -126,14 +128,20 @@ test("original frames at line 5", () => {
         { varname: "o", value: { value: 42 }}
       ]
     },
+    {
+      // The global scope, we only show the binding introduced by our code
+      start: generatedRanges[0].start,
+      end: generatedRanges[0].end,
+      bindings: [
+        { varname: "e", value: { value: 42 }}
+      ]
+    },
   ];
-  expect(getOriginalFrames(
-    { line: 4, column: 0 },
-    { sourceIndex: 1, line: 2, column: 2 },
-    generatedRanges,
-    originalScopes,
-    debuggerScopes
-  )).toMatchInlineSnapshot(`
+  expect(getOriginalFrames(sourceMap, [{
+  location: { line: 4, column: 0 },
+  scopes: debuggerScopes
+}])).
+toMatchInlineSnapshot(`
 [
   {
     "location": {
@@ -149,7 +157,7 @@ test("original frames at line 5", () => {
             "value": {
               "value": 42,
             },
-            "varname": "e",
+            "varname": "x",
           },
         ],
       },
@@ -175,7 +183,7 @@ test("original frames at line 5", () => {
             "value": {
               "value": 42,
             },
-            "varname": "x",
+            "varname": "e",
           },
         ],
       },
@@ -193,16 +201,6 @@ test("original frames at line 5", () => {
         "bindings": [
           {
             "value": {
-              "value": 42,
-            },
-            "varname": "e",
-          },
-        ],
-      },
-      {
-        "bindings": [
-          {
-            "value": {
               "unavailable": true,
             },
             "varname": "f",
@@ -212,6 +210,16 @@ test("original frames at line 5", () => {
               "value": 42,
             },
             "varname": "num",
+          },
+        ],
+      },
+      {
+        "bindings": [
+          {
+            "value": {
+              "value": 42,
+            },
+            "varname": "e",
           },
         ],
       },

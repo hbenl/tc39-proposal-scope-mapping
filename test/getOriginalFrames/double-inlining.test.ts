@@ -1,6 +1,6 @@
 import { getOriginalFrames } from "../../src/getOriginalFrames";
 import { OriginalScope, GeneratedRange, GeneratedDebuggerScope } from "../../src/types";
-import { decodeScopes, encodeScopes } from "../../src/util";
+import { createSourceMapWithScopes, decodeScopes, encodeScopes } from "../../src/util";
 
 /**
 Original source:
@@ -88,6 +88,18 @@ const generatedRanges: GeneratedRange[] = [{
   ],
 }];
 
+const sourceMap = createSourceMapWithScopes(
+  [{
+    original: { sourceIndex: 0, line: 1, column: 2 },
+    generated: { line: 0, column: 0 },
+  }, {
+    original: { sourceIndex: 0, line: 5, column: 2 },
+    generated: { line: 1, column: 0 },
+  }],
+  encodedScopes,
+  scopeNames
+);
+
 test("decode scopes from sourcemap", () => {
   const { scopes, ranges } = decodeScopes(encodedScopes, scopeNames);
   expect(scopes).toStrictEqual(originalScopes);
@@ -103,6 +115,12 @@ test("encode scopes to sourcemap", () => {
 test("original scopes at line 1", () => {
   const debuggerScopes: GeneratedDebuggerScope[] = [
     {
+      // The module scope
+      start: generatedRanges[0].start,
+      end: generatedRanges[0].end,
+      bindings: []
+    },
+    {
       // The global scope, we only show one example binding
       start: generatedRanges[0].start,
       end: generatedRanges[0].end,
@@ -110,20 +128,12 @@ test("original scopes at line 1", () => {
         { varname: "document", value: { objectId: 1 }}
       ]
     },
-    {
-      // The module scope
-      start: generatedRanges[0].start,
-      end: generatedRanges[0].end,
-      bindings: []
-    },
   ];
-  expect(getOriginalFrames(
-    { line: 0, column: 0 },
-    { sourceIndex: 0, line: 1, column: 2 },
-    generatedRanges,
-    originalScopes,
-    debuggerScopes
-  )).toMatchInlineSnapshot(`
+  expect(getOriginalFrames(sourceMap, [{
+  location: { line: 0, column: 0 },
+  scopes: debuggerScopes
+}])).
+toMatchInlineSnapshot(`
 [
   {
     "location": {
@@ -137,9 +147,9 @@ test("original scopes at line 1", () => {
         "bindings": [
           {
             "value": {
-              "objectId": 1,
+              "value": "ipsum",
             },
-            "varname": "document",
+            "varname": "x",
           },
         ],
       },
@@ -163,9 +173,9 @@ test("original scopes at line 1", () => {
         "bindings": [
           {
             "value": {
-              "value": "ipsum",
+              "objectId": 1,
             },
-            "varname": "x",
+            "varname": "document",
           },
         ],
       },
@@ -183,9 +193,9 @@ test("original scopes at line 1", () => {
         "bindings": [
           {
             "value": {
-              "objectId": 1,
+              "value": "amet",
             },
-            "varname": "document",
+            "varname": "x",
           },
         ],
       },
@@ -209,9 +219,9 @@ test("original scopes at line 1", () => {
         "bindings": [
           {
             "value": {
-              "value": "amet",
+              "objectId": 1,
             },
-            "varname": "x",
+            "varname": "document",
           },
         ],
       },
@@ -229,16 +239,6 @@ test("original scopes at line 1", () => {
         "bindings": [
           {
             "value": {
-              "objectId": 1,
-            },
-            "varname": "document",
-          },
-        ],
-      },
-      {
-        "bindings": [
-          {
-            "value": {
               "unavailable": true,
             },
             "varname": "f",
@@ -251,6 +251,16 @@ test("original scopes at line 1", () => {
           },
         ],
       },
+      {
+        "bindings": [
+          {
+            "value": {
+              "objectId": 1,
+            },
+            "varname": "document",
+          },
+        ],
+      },
     ],
   },
 ]
@@ -260,6 +270,12 @@ test("original scopes at line 1", () => {
 test("original scopes at line 2", () => {
   const debuggerScopes: GeneratedDebuggerScope[] = [
     {
+      // The module scope
+      start: generatedRanges[0].start,
+      end: generatedRanges[0].end,
+      bindings: []
+    },
+    {
       // The global scope, we only show one example binding
       start: generatedRanges[0].start,
       end: generatedRanges[0].end,
@@ -267,20 +283,12 @@ test("original scopes at line 2", () => {
         { varname: "document", value: { objectId: 1 }}
       ]
     },
-    {
-      // The module scope
-      start: generatedRanges[0].start,
-      end: generatedRanges[0].end,
-      bindings: []
-    },
   ];
-  expect(getOriginalFrames(
-    { line: 1, column: 0 },
-    { sourceIndex: 0, line: 5, column: 2 },
-    generatedRanges,
-    originalScopes,
-    debuggerScopes
-  )).toMatchInlineSnapshot(`
+  expect(getOriginalFrames(sourceMap, [{
+  location: { line: 1, column: 0 },
+  scopes: debuggerScopes
+}])).
+toMatchInlineSnapshot(`
 [
   {
     "location": {
@@ -294,9 +302,9 @@ test("original scopes at line 2", () => {
         "bindings": [
           {
             "value": {
-              "objectId": 1,
+              "value": "amet",
             },
-            "varname": "document",
+            "varname": "x",
           },
         ],
       },
@@ -320,9 +328,9 @@ test("original scopes at line 2", () => {
         "bindings": [
           {
             "value": {
-              "value": "amet",
+              "objectId": 1,
             },
-            "varname": "x",
+            "varname": "document",
           },
         ],
       },
@@ -340,16 +348,6 @@ test("original scopes at line 2", () => {
         "bindings": [
           {
             "value": {
-              "objectId": 1,
-            },
-            "varname": "document",
-          },
-        ],
-      },
-      {
-        "bindings": [
-          {
-            "value": {
               "unavailable": true,
             },
             "varname": "f",
@@ -359,6 +357,16 @@ test("original scopes at line 2", () => {
               "unavailable": true,
             },
             "varname": "g",
+          },
+        ],
+      },
+      {
+        "bindings": [
+          {
+            "value": {
+              "objectId": 1,
+            },
+            "varname": "document",
           },
         ],
       },
