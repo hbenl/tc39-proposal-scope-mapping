@@ -166,7 +166,7 @@ toMatchInlineSnapshot(`
       "line": 4,
       "sourceIndex": 0,
     },
-    "name": undefined,
+    "name": "f",
     "scopes": [
       {
         "bindings": [
