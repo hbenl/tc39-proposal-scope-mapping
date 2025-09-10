@@ -31,7 +31,7 @@ Generated source:
 */
 
 const scopeNames = ["module", "block", "x", "x1", "x2"];
-const encodedScopes = "BCAAA,BCAAC,DE,BCDCA,DA,CDD,CCB,CAA,ECAA,ECAC,GG,EDDCC,GI,FBS,FCB,FA";
+const encodedScopes = "BCAAA,BCAAC,DE,BCDCA,DA,CDD,CCB,CAA,ECAA,ECAC,GE,EDDCC,GF,FBS,FCB,FA";
 const originalScopes: OriginalScope[] = [
   {
     start: { line: 0, column: 0 },

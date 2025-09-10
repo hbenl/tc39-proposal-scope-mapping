@@ -22,7 +22,7 @@ Generated source:
 */
 
 const scopeNames = ["module", "log", "x", "function", "msg", "\"foo\"", "\"bar\""];
-const encodedScopes = "BCAAA,DCC,BHASCG,DE,CCB,CEH,ECAA,GDD,ECAC,GK,IAEB,FT,EDBAA,GM,IAGA,FT,FA";
+const encodedScopes = "BCAAA,DCC,BHASCG,DE,CCB,CEH,ECAA,GAG,HBHBA,ECAC,GG,IAEB,FT,EDBAA,GH,IAGA,FT,FA";
 const originalScopes: OriginalScope[] = [
   {
     start: { line: 0, column: 0 },

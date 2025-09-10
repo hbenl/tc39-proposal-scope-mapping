@@ -40,7 +40,7 @@ Original sources:
 */
 
 const scopeNames = ["module", "MODULE_CONSTANT", "Logger", "log", "function", "x", "inner", "outer", "\"module_constant\"", "42", "null"];
-const encodedScopes = "BCAAA,DCC,BHDQGI,DG,CCD,CBB,BCAAJ,DHIC,BHCSGI,DF,CCB,BHCSCA,DA,CCB,CDM,ECAE,GDDD,ECAF,GQD,ECAI,GS,IBKA,ECAD,GS,IBHC,ECAF,GS,IBDC,FQ,FA,FA,FA,ECAD,GQD,ECAI,GU,IBLA,ECAD,GU,IBHC,ECAF,GU,IBDC,FS,FA,FA,FA,FA";
+const encodedScopes = "BCAAA,DCC,BHDQGI,DG,CCD,CBB,BCAAJ,DHIC,BHCSGI,DF,CCB,BHCSCA,DA,CCB,CDM,ECAE,GAAA,ECAF,GJA,ECAI,GK,IBKA,ECAD,GK,IBHC,ECAF,GK,IBDC,FQ,FA,FA,FA,ECAD,GJA,ECAI,GL,IBLA,ECAD,GL,IBHC,ECAF,GL,IBDC,FS,FA,FA,FA,FA";
 const originalScopes: OriginalScope[] = [
   {
     start: { line: 0, column: 0 },

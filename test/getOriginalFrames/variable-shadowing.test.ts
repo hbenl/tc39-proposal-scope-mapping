@@ -33,7 +33,7 @@ Generated source:
 */
 
 const scopeNames = ["module", "outer", "function", "inner", "num", "num_plus_one", "value", "value_plus_one", "f", "g", "a", "b"];
-const encodedScopes = "BCAAA,DC,BHAACE,DECC,BHBCEA,DCC,CDD,CDB,CBJ,ECAA,GQ,EGAC,GSUW,EHBCC,GUW,FDD,FDB,FBF";
+const encodedScopes = "BCAAA,DC,BHAACE,DECC,BHBCEA,DCC,CDD,CDB,CBJ,ECAA,GJ,EGAC,GKLM,EHBCC,GLM,FDD,FDB,FBF";
 const originalScopes: OriginalScope[] = [
   {
     start: { line: 0, column: 0 },

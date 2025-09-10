@@ -34,7 +34,7 @@ Original sources:
 */
 
 const scopeNames = ["module", "f", "num", "increment", "function", "x", "o", "l", "e"];
-const encodedScopes = "BCAAA,DCC,CDT,BCAAA,DCF,BHBVCI,DI,CCB,CAA,ECAA,GDM,ECAC,GOD,EDCAC,GQ,IACA,FCV,FBR,FA";
+const encodedScopes = "BCAAA,DCC,CDT,BCAAA,DCF,BHBVCI,DI,CCB,CAA,ECAA,GAH,ECAC,GIA,EDCAC,GJ,IACA,FCV,FBR,FA";
 const originalScopes: OriginalScope[] = [
   {
     start: { line: 0, column: 0 },

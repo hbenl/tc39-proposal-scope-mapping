@@ -25,7 +25,7 @@ Generated source:
 */
 
 const scopeNames = ["module", "f", "g", "function", "x", '"amet"', '"ipsum"'];
-const encodedScopes = "BCAAA,DCC,BHAACG,DE,CCB,BHBACA,DA,CDB,CCrB,ECAA,GDD,ECAE,GK,IAHA,ECAD,GM,IAEC,Fb,FBe,FBrB";
+const encodedScopes = "BCAAA,DCC,BHAACG,DE,CCB,BHBACA,DA,CDB,CCrB,ECAA,GAA,ECAE,GG,IAHA,ECAD,GH,IAEC,Fb,FBe,FBrB";
 const originalScopes: OriginalScope[] = [
   {
     start: { line: 0, column: 0 },

@@ -36,7 +36,7 @@ Generated source:
 */
 
 const scopeNames = ["module", "CALL_CHANCE", "log", "inner", "outer", "function", "x", "shouldCall", "block", "0.5", "a", "c", "b"];
-const encodedScopes = "BCAAA,DCCCC,BHCQEK,DE,CCB,BHCSCA,DA,CCB,BHCSCA,DAC,BCDSG,CCD,CBB,CDM,ECAA,GSDDU,EGNG,GWY,EC5BD,GW,IAOE,ECAD,GW,IAHC,FO,FA,FB,FO";
+const encodedScopes = "BCAAA,DCCCC,BHCQEK,DE,CCB,BHCSCA,DA,CCB,BHCSCA,DAC,BCDSG,CCD,CBB,CDM,ECAA,GKAAL,EGNG,GMN,EC5BD,GM,IAOE,ECAD,GM,IAHC,FO,FA,FB,FO";
 const originalScopes: OriginalScope[] = [
   {
     start: { line: 0, column: 0 },
