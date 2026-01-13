@@ -1,7 +1,7 @@
 import { EncodedSourceMap, TraceMap } from "@jridgewell/trace-mapping";
-import type { OriginalScope, GeneratedRange } from "@chrome-devtools/source-map-scopes-codec";
+import type { OriginalScope, GeneratedRange, Binding } from "@chrome-devtools/source-map-scopes-codec";
 import { Location, GeneratedDebuggerScope, UnavailableValue, DebuggerValue, DebuggerFrame, OriginalLocation, DebuggerScopeBinding, GeneratedDebuggerFrame, OriginalDebuggerScope } from "./types";
-import { assert, getOriginalLocation, isEnclosing, isInRange } from "./util";
+import { assert, getOriginalLocation, isBefore, isEnclosing, isInRange } from "./util";
 
 export interface SourceMapWithDecodedScopes extends EncodedSourceMap {
   originalScopes: (OriginalScope | null)[];
@@ -12,37 +12,58 @@ export function getOriginalFrames(
   sourceMap: SourceMapWithDecodedScopes,
   frames: GeneratedDebuggerFrame[]
 ): DebuggerFrame[] {
+  const symbolized = symbolizeStackTrace(sourceMap, frames.map(frame => frame.location));
+  return symbolized.map(({ name, generatedFrameIndex, originalLocation }) => {
+    const generatedFrame = frames[generatedFrameIndex];
+    assert(generatedFrame);
+    const scopes = buildScopeChain(sourceMap, generatedFrame.scopes, generatedFrame.location, originalLocation);
+    return { name, location: originalLocation, scopes };
+  });
+}
+
+interface SourceMappedFrame {
+  name?: string;
+  generatedFrameIndex: number;
+  originalLocation: OriginalLocation;
+}
+
+export function symbolizeStackTrace(
+  sourceMap: SourceMapWithDecodedScopes,
+  frameLocations: Location[]
+): SourceMappedFrame[] {
   const traceMap = new TraceMap(sourceMap);
-  const originalFrames: DebuggerFrame[] = [];
-  for (const frame of frames) {
-    const generatedLocation = frame.location;
+  const sourceMappedFrames: SourceMappedFrame[] = [];
+  frameLocations.forEach((generatedLocation, generatedFrameIndex) => {
     const originalLocation = getOriginalLocation(traceMap, sourceMap.sources as string[], generatedLocation);
     assert(originalLocation);
-    originalFrames.push(getOriginalFrame(sourceMap, frame.scopes, generatedLocation, originalLocation));
+    const originalScope: OriginalScope | undefined = findOriginalScope(originalLocation, sourceMap.originalScopes[originalLocation.sourceIndex]!);
+    const name = findFunctionName(originalScope);
+    sourceMappedFrames.push({ name, generatedFrameIndex, originalLocation });
 
     let generatedRange = findGeneratedRange(generatedLocation, sourceMap.generatedRanges);
     while (generatedRange && !generatedRange.isStackFrame) {
       const callsite = generatedRange.callSite;
       if (callsite) {
-        originalFrames.push(getOriginalFrame(sourceMap, frame.scopes, generatedLocation, callsite));
+        const originalScope: OriginalScope | undefined = findOriginalScope(callsite, sourceMap.originalScopes[callsite.sourceIndex]!);
+        const name = findFunctionName(originalScope);
+        sourceMappedFrames.push({ name, generatedFrameIndex, originalLocation: callsite });
       }
       generatedRange = generatedRange.parent;
     }
-  }
+  });
 
-  return originalFrames;
+  return sourceMappedFrames;
 }
 
-function getOriginalFrame(
+function buildScopeChain(
   sourceMap: SourceMapWithDecodedScopes,
   debuggerScopes: GeneratedDebuggerScope[],
   generatedLocation: Location,
   originalLocation: OriginalLocation,
-): DebuggerFrame {
+): OriginalDebuggerScope[] {
   const innermostGeneratedRange = findGeneratedRange(generatedLocation, sourceMap.generatedRanges);
   assert(innermostGeneratedRange);
   let originalScope: OriginalScope | undefined = findOriginalScope(originalLocation, sourceMap.originalScopes[originalLocation.sourceIndex]!);
-  const name = findFunctionName(originalScope);
 
   const originalDebuggerScopes: OriginalDebuggerScope[] = [];
   while (originalScope) {
@@ -53,17 +74,7 @@ function getOriginalFrame(
       const activeDebuggerScopes = debuggerScopes.filter(scope => isEnclosing(scope, generatedRange));
       for (let i = 0; i < originalScope.variables.length; i++) {
         const varname = originalScope.variables[i];
-        const expressionOrBindingRanges = generatedRange.values[i];
-        let expression: string | undefined = undefined;
-        if (typeof expressionOrBindingRanges === "string") {
-          expression = expressionOrBindingRanges;
-        } else if (Array.isArray(expressionOrBindingRanges)) {
-          for (const bindingRange of expressionOrBindingRanges) {
-            if (isInRange(generatedLocation, { start: bindingRange.from, end: bindingRange.to })) {
-              expression = bindingRange.value;
-            }
-          }
-        }
+        const expression = findBindingRecord(generatedRange.values[i], generatedLocation);
         // We use `lookupScopeValue()`, which only works if `expression` is the name of a
         // generated variable or a string expression; to support arbitrary expressions we'd need to use `evaluateWithScopes()`
         const value = expression !== undefined ? lookupScopeValue(expression, activeDebuggerScopes) : { unavailable: true } as UnavailableValue;
@@ -77,11 +88,19 @@ function getOriginalFrame(
   }
 
   originalDebuggerScopes.push({ bindings: debuggerScopes[debuggerScopes.length - 1].bindings });
-  return {
-    location: originalLocation,
-    scopes: originalDebuggerScopes,
-    name
-  };
+  return originalDebuggerScopes;
+}
+
+function findBindingRecord(binding: Binding, generatedLocation: Location): string | undefined {
+  if (typeof binding === "string") {
+    return binding;
+  } else if (Array.isArray(binding)) {
+    for (let i = binding.length - 1; i >= 0; i--) {
+      if (!isBefore(generatedLocation, binding[i].from)) {
+        return binding[i].value;
+      }
+    }
+  }
 }
 
 function findAncestorWithScope(generatedRange: GeneratedRange, originalScope: OriginalScope): GeneratedRange | undefined{
