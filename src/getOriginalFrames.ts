@@ -33,12 +33,21 @@ export function symbolizeStackTrace(
 ): SourceMappedFrame[] {
   const traceMap = new TraceMap(sourceMap);
   const sourceMappedFrames: SourceMappedFrame[] = [];
+  let hideNextFrame = false;
   frameLocations.forEach((generatedLocation, generatedFrameIndex) => {
-    const originalLocation = getOriginalLocation(traceMap, sourceMap.sources as string[], generatedLocation);
-    assert(originalLocation);
-    const originalScope: OriginalScope | undefined = findOriginalScope(originalLocation, sourceMap.originalScopes[originalLocation.sourceIndex]!);
-    const name = findFunctionName(originalScope);
-    sourceMappedFrames.push({ name, generatedFrameIndex, originalLocation });
+    if (!hideNextFrame) {
+      const originalLocation = getOriginalLocation(traceMap, sourceMap.sources as string[], generatedLocation);
+      let originalScope: OriginalScope | undefined;
+      if (originalLocation) {
+        originalScope = findOriginalScope(originalLocation, sourceMap.originalScopes[originalLocation.sourceIndex]!);
+        if (originalScope) {
+          const name = findFunctionName(originalScope);
+          sourceMappedFrames.push({ name, generatedFrameIndex, originalLocation });
+        }
+      }
+      if (!originalScope)
+        sourceMappedFrames.push({ generatedFrameIndex, originalLocation: { sourceIndex: -1, ...generatedLocation }});
+    }
 
     let generatedRange = findGeneratedRange(generatedLocation, sourceMap.generatedRanges);
     while (generatedRange && !generatedRange.isStackFrame) {
@@ -50,6 +59,7 @@ export function symbolizeStackTrace(
       }
       generatedRange = generatedRange.parent;
     }
+    hideNextFrame = generatedRange?.isHidden ?? false;
   });
 
   return sourceMappedFrames;
