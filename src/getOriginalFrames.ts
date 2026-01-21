@@ -12,7 +12,7 @@ export function getOriginalFrames(
   sourceMap: SourceMapWithDecodedScopes,
   frames: GeneratedDebuggerFrame[]
 ): DebuggerFrame[] {
-  const symbolized = symbolizeStackTrace(sourceMap, frames.map(frame => frame.location));
+  const symbolized = mapStackTrace(sourceMap, frames.map(frame => frame.location));
   return symbolized.map(({ name, generatedFrameIndex, originalLocation }) => {
     const generatedFrame = frames[generatedFrameIndex];
     assert(generatedFrame);
@@ -25,43 +25,60 @@ interface SourceMappedFrame {
   name?: string;
   generatedFrameIndex: number;
   originalLocation: OriginalLocation;
+  hideCaller?: boolean;
 }
 
-export function symbolizeStackTrace(
+export function mapStackTrace(
   sourceMap: SourceMapWithDecodedScopes,
   frameLocations: Location[]
 ): SourceMappedFrame[] {
-  const traceMap = new TraceMap(sourceMap);
   const sourceMappedFrames: SourceMappedFrame[] = [];
   let hideNextFrame = false;
-  frameLocations.forEach((generatedLocation, generatedFrameIndex) => {
-    if (!hideNextFrame) {
-      const originalLocation = getOriginalLocation(traceMap, sourceMap.sources as string[], generatedLocation);
-      let originalScope: OriginalScope | undefined;
-      if (originalLocation) {
-        originalScope = findOriginalScope(originalLocation, sourceMap.originalScopes[originalLocation.sourceIndex]!);
-        if (originalScope) {
-          const name = findFunctionName(originalScope);
-          sourceMappedFrames.push({ name, generatedFrameIndex, originalLocation });
-        }
+  for (let i = 0; i < frameLocations.length; i++) {
+    const currentSourceMappedFrames = mapStackFrame(sourceMap, frameLocations[i]);
+    for (let j = 0; j < currentSourceMappedFrames.length; j++) {
+      if (!hideNextFrame) {
+        currentSourceMappedFrames[j].generatedFrameIndex = i;
+        sourceMappedFrames.push(currentSourceMappedFrames[j]);
       }
-      if (!originalScope)
-        sourceMappedFrames.push({ generatedFrameIndex, originalLocation: { sourceIndex: -1, ...generatedLocation }});
+      hideNextFrame = currentSourceMappedFrames[j].hideCaller ?? false;
     }
+  }
+  for (const frame of sourceMappedFrames)
+    delete frame.hideCaller;
+  return sourceMappedFrames;
+}
 
-    let generatedRange = findGeneratedRange(generatedLocation, sourceMap.generatedRanges);
-    while (generatedRange && !generatedRange.isStackFrame) {
-      const callsite = generatedRange.callSite;
-      if (callsite) {
-        const originalScope: OriginalScope | undefined = findOriginalScope(callsite, sourceMap.originalScopes[callsite.sourceIndex]!);
-        const name = findFunctionName(originalScope);
-        sourceMappedFrames.push({ name, generatedFrameIndex, originalLocation: callsite });
-      }
-      generatedRange = generatedRange.parent;
+function mapStackFrame(
+  sourceMap: SourceMapWithDecodedScopes,
+  frameLocation: Location
+): SourceMappedFrame[] {
+  const traceMap = new TraceMap(sourceMap);
+  const sourceMappedFrames: SourceMappedFrame[] = [];
+  const originalLocation = getOriginalLocation(traceMap, sourceMap.sources as string[], frameLocation);
+  let originalScope: OriginalScope | undefined;
+  if (originalLocation) {
+    originalScope = findOriginalScope(originalLocation, sourceMap.originalScopes[originalLocation.sourceIndex]!);
+    if (originalScope) {
+      const name = findFunctionName(originalScope);
+      sourceMappedFrames.push({ name, generatedFrameIndex: 0, originalLocation, hideCaller: false });
     }
-    hideNextFrame = generatedRange?.isHidden ?? false;
-  });
+  }
+  if (!originalScope)
+    sourceMappedFrames.push({ generatedFrameIndex: 0, originalLocation: { sourceIndex: -1, ...frameLocation }, hideCaller: false });
 
+  let generatedRange = findGeneratedRange(frameLocation, sourceMap.generatedRanges);
+  while (generatedRange && !generatedRange.isStackFrame) {
+    const callsite = generatedRange.callSite;
+    if (callsite) {
+      const originalScope: OriginalScope | undefined = findOriginalScope(callsite, sourceMap.originalScopes[callsite.sourceIndex]!);
+      const name = findFunctionName(originalScope);
+      sourceMappedFrames.push({ name, generatedFrameIndex: 0, originalLocation: callsite, hideCaller: false });
+    }
+    generatedRange = generatedRange.parent;
+  }
+  if (generatedRange?.isHidden)
+    sourceMappedFrames[sourceMappedFrames.length - 1].hideCaller = true;
   return sourceMappedFrames;
 }
 

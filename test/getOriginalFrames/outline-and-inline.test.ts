@@ -1,4 +1,4 @@
-import { symbolizeStackTrace } from "../../src/getOriginalFrames";
+import { mapStackTrace } from "../../src/getOriginalFrames";
 import { OriginalScope, GeneratedRange } from "../../src/types";
 import { createSourceMapWithScopes, decodeScopes, encodeScopes } from "../../src/util";
 
@@ -123,7 +123,7 @@ test("encode scopes to sourcemap", () => {
 });
 
 test("symbolize stacktrace", () => {
-  expect(symbolizeStackTrace(sourceMap, [
+  expect(mapStackTrace(sourceMap, [
     { line: 2, column: 10 },
     { line: 6, column: 4 }]
   )).toMatchInlineSnapshot(`
