@@ -50,8 +50,8 @@ Generated source:
 24 main();
 */
 
-const scopeNames = ["module", "X", "main", "foo", "function", "a", "b", "x", "null", "'abc'", "undefined", "123"];
-const encodedScopes = "BCAAA,DCC,BHBKGI,DGC,CDD,BHDHDA,DC,CFB,CAA,ECAA,GAD,EFBN,FZ,EPBKC,GGH,FjB,EPBRA,GGJ,FmB,EPBHA,GGH,F0C,EPBHA,GGJ,F6B,EHCNC,GI,EDCED,GKL,IAJE,FN,EDBEA,GML,IAKE,FL,EDBPA,GKL,IALL,FO,FBB,EFBS,FEB,EFBa,FCB,EFBY,FCB,FBH";
+const scopeNames = ["module", "X", "main", "foo", "function", "a", "b", "x", "null", "'abc'", "undefined", "123", "1", "2"];
+const encodedScopes = "BCAAA,DCC,BHBKGI,DGC,CDD,BHDHDA,DC,CFB,CAA,ECAA,GAD,EFBN,FZ,EPBKC,GGH,FjB,EPBRA,GGJ,FmB,EPBHA,GGH,F0C,EPBHA,GGJ,F6B,EHCNC,GI,EDCED,GKL,IAJE,FN,EDBEA,GML,IAKE,FL,EDBPA,GNO,IALL,FO,FBB,EFBS,FEB,EFBa,FCB,EFBY,FCB,FBH";
 
 const originalScopes: OriginalScope[] = [
   {
@@ -170,7 +170,7 @@ const generatedRanges: GeneratedRange[] = [
             isStackFrame: false,
             isHidden: false,
             originalScope: originalScopes[0].children![0],
-            values: ["'abc'", "undefined"],
+            values: ["1", "2"],
             callSite: { sourceIndex: 0, line: 11, column: 11 },
             children: [],
           }
