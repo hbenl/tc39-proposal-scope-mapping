@@ -4,6 +4,7 @@ import { mergeScopeMaps } from "../../src/mergeScopeMaps";
 import { GeneratedDebuggerScope } from "../../src/types";
 import { getOriginalFrames } from "../../src/getOriginalFrames";
 import { addParents } from "../../src/util";
+import { convertLegacyScopes } from "./convertLegacyScopes";
 
 const originalSource = `
 function f1(x) {
@@ -16,7 +17,7 @@ f1("world");
 `;
 
 async function transpile() {
-  const { code: intermediateSource, map: sourceMap1 } = await minify(
+  const { code: intermediateSource, map: legacySourceMap1 } = await minify(
     { "original.js": originalSource },
     {
       compress: true,
@@ -28,7 +29,7 @@ async function transpile() {
     }
   );
 
-  const { code: generatedSource, map: sourceMap2 } = await minify(
+  const { code: generatedSource, map: legacySourceMap2 } = await minify(
     { "intermediate.js": intermediateSource! },
     {
       compress: {
@@ -41,6 +42,9 @@ async function transpile() {
       },
     }
   );
+
+  const sourceMap1 = convertLegacyScopes(legacySourceMap1 as any);
+  const sourceMap2 = convertLegacyScopes(legacySourceMap2 as any);
 
   const { originalScopes, generatedRanges } = mergeScopeMaps([sourceMap1 as any], sourceMap2 as any);
   addParents(originalScopes, generatedRanges);

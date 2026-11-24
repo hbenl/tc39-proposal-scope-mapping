@@ -68,7 +68,8 @@ Generated source:
 */
 
 const scopeNames = ["module", "fn", "function"];
-const encodedScopes = "BCAAA,DC,BHAUCE,CCB,CBF,ECAA,GC,ENB5C,ENBa,EM/B,FT,FE,ENB/B,ENBiB,FhC,ENBhB,FlC,ENBf,F3C,FCF,FBB,ENBpC,ENBpB,FqB,ENBrE,FQ,ENBV,EMW,FY,FD,ENBW,FVF,FBB,EHCOC,ENB3B,ENBvB,FFJ,FBF,FBB,FBF";
+const encodedScopes = ["BCAAA,DC,BHAUCE,CCB,CBF"];
+const encodedRanges = ["ECAAA,GC,ENB5C,ENBa,EM/B,FT,FE,ENB/B,ENBiB,FhC,ENBhB,FlC,ENBf,F3C,FCF,FBB,ENBpC,ENBpB,FqB,ENBrE,FQ,ENBV,EMW,FY,FD,ENBW,FVF,FBB,EHCOAC,ENB3B,ENBvB,FFJ,FBF,FBB,FBF"];
 
 const originalScopes: OriginalScope[] = [
   {
@@ -245,19 +246,21 @@ const sourceMap: any = {
   sources: ["original.js"],
   names: scopeNames,
   mappings: ";;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;AAAA,SAAe,EAAE;;;;wBACR,qBAAM,EAAE,EAAA;wBAAf,sBAAO,SAAQ,EAAC;;;;CACjB;AACD,EAAE,EAAE,CAAC",
-  scopes: encodedScopes
+  scopes: encodedScopes,
+  ranges: encodedRanges,
 };
 addDecodedScopes(sourceMap);
 
 test("decode scopes from sourcemap", () => {
-  const { scopes, ranges } = decodeScopes(encodedScopes, scopeNames);
+  const { scopes, ranges } = decodeScopes(encodedScopes, encodedRanges, scopeNames);
   expect(scopes).toStrictEqual(originalScopes);
   expect(ranges).toStrictEqual(generatedRanges);
 });
 
 test("encode scopes to sourcemap", () => {
-  const { scopes, names } = encodeScopes(originalScopes, generatedRanges);
+  const { scopes, ranges, names } = encodeScopes(originalScopes, generatedRanges);
   expect(scopes).toStrictEqual(encodedScopes);
+  expect(ranges).toStrictEqual(encodedRanges);
   expect(names).toStrictEqual(scopeNames);
 });
 

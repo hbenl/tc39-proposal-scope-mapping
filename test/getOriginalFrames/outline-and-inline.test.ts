@@ -28,7 +28,8 @@ Generated source:
 */
 
 const scopeNames = ["module", "foo", "function", "for-loop", "x"];
-const encodedScopes = "BCAAA,DC,BHAPCE,BCBdC,DG,CDD,CBB,CBG,ECAA,GA,ECAC,IAGA,EObC,GF,FDB,EBB3B,FDB,FA,FA";
+const encodedScopes = ["BCAAA,DC,BHAPCE,BCBdC,DG,CDD,CBB,CBG"];
+const encodedRanges = ["ECAAA,GA,ECAAC,IAGA,EObAC,GF,FDB,EBB3B,FDB,FA,FA"];
 
 const originalScopes: OriginalScope[] = [
   {
@@ -107,18 +108,20 @@ const sourceMap = createSourceMapWithScopes(
     generated: { line: 2, column: 10 },
   }],
   encodedScopes,
+  encodedRanges,
   scopeNames
 );
 
 test("decode scopes from sourcemap", () => {
-  const { scopes, ranges } = decodeScopes(encodedScopes, scopeNames);
+  const { scopes, ranges } = decodeScopes(encodedScopes, encodedRanges, scopeNames);
   expect(scopes).toStrictEqual(originalScopes);
   expect(ranges).toStrictEqual(generatedRanges);
 });
 
 test("encode scopes to sourcemap", () => {
-  const { scopes, names } = encodeScopes(originalScopes, generatedRanges);
+  const { scopes, ranges, names } = encodeScopes(originalScopes, generatedRanges);
   expect(scopes).toStrictEqual(encodedScopes);
+  expect(ranges).toStrictEqual(encodedRanges);
   expect(names).toStrictEqual(scopeNames);
 });
 

@@ -36,7 +36,8 @@ Generated source:
 */
 
 const scopeNames = ["module", "CALL_CHANCE", "log", "inner", "outer", "function", "x", "shouldCall", "block", "0.5", "a", "c", "b"];
-const encodedScopes = "BCAAA,DCCCC,BHCQEK,DE,CCB,BHCSCA,DA,CCB,BHCSCA,DAC,BCDSG,CCD,CBB,CDM,ECAA,GKAAL,EGNG,GMN,EC5BD,GM,IAOE,ECAD,GM,IAHC,FO,FA,FB,FO";
+const encodedScopes = ["BCAAA,DCCCC,BHCQEK,DE,CCB,BHCSCA,DA,CCB,BHCSCA,DAC,BCDSG,CCD,CBB,CDM"];
+const encodedRanges = ["ECAAA,GKAAL,EGNAG,GMN,EC5BAD,GM,IAOE,ECAAD,GM,IAHC,FO,FA,FB,FO"];
 const originalScopes: OriginalScope[] = [
   {
     start: { line: 0, column: 0 },
@@ -133,18 +134,20 @@ const sourceMap = createSourceMapWithScopes(
     generated: { line: 0, column: 70 },
   }],
   encodedScopes,
+  encodedRanges,
   scopeNames
 );
 
 test("decode scopes from sourcemap", () => {
-  const { scopes, ranges } = decodeScopes(encodedScopes, scopeNames);
+  const { scopes, ranges } = decodeScopes(encodedScopes, encodedRanges, scopeNames);
   expect(scopes).toStrictEqual(originalScopes);
   expect(ranges).toStrictEqual(generatedRanges);
 });
 
 test("encode scopes to sourcemap", () => {
-  const { scopes, names } = encodeScopes(originalScopes, generatedRanges);
+  const { scopes, ranges, names } = encodeScopes(originalScopes, generatedRanges);
   expect(scopes).toStrictEqual(encodedScopes);
+  expect(ranges).toStrictEqual(encodedRanges);
   expect(names).toStrictEqual(scopeNames);
 });
 

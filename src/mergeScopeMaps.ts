@@ -1,10 +1,11 @@
 import { EncodedSourceMap, TraceMap, eachMapping, originalPositionFor, generatedPositionFor } from "@jridgewell/trace-mapping";
 import { decode, Binding, SubRangeBinding } from "@chrome-devtools/source-map-scopes-codec";
 import { GeneratedRange, Location, LocationRange, OriginalScope } from "./types";
-import { assert, collectGeneratedRangeParents, collectGeneratedRangesByLocation, compareLocations, isBefore, isEqual, isInRange, isOverlapping, rangeKey } from "./util";
+import { assert, collectGeneratedRangeParents, collectGeneratedRangesByLocation, compareLocations, isBefore, isEqual, isInRange, isOverlapping, rangeKey, toScopesPerSource } from "./util";
 
 interface SourceMapWithScopes extends EncodedSourceMap {
-  scopes: string;
+  scopes: (string | null)[];
+  ranges: string[];
 }
 
 interface MergedRange {
@@ -24,7 +25,8 @@ export function mergeScopeMaps(
   sourceMaps1: SourceMapWithScopes[],
   sourceMap2: SourceMapWithScopes
 ): { originalScopes: (OriginalScope | null)[], generatedRanges: GeneratedRange[] } {
-  const { scopes: sourceMap2Scopes, ranges: sourceMap2Ranges } = decode(sourceMap2);
+  const { scopes: decodedSourceMap2Scopes, ranges: sourceMap2Ranges } = decode(sourceMap2);
+  const sourceMap2Scopes = toScopesPerSource(decodedSourceMap2Scopes);
   // generatedRangeParents contains GeneratedRanges in the generated
   // source which reference OriginalScopes in the intermediate source.
   const generatedRangeParents = new Map<GeneratedRange, GeneratedRange>();
@@ -52,7 +54,7 @@ export function mergeScopeMaps(
     const { scopes, ranges } = decode(sourceMap);
     intermediateGeneratedRangesByLocation.push(collectGeneratedRangesByLocation(ranges));
     originalSourceOffsets.push(originalScopes.length);
-    originalScopes.push(...scopes);
+    originalScopes.push(...toScopesPerSource(scopes));
   }
 
   const traceMaps1 = sourceMaps1.map(sourceMap => new TraceMap(sourceMap));

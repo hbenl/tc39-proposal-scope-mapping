@@ -77,14 +77,30 @@ export function collectGeneratedRangesByLocation(
   return generatedRangesByLocation;
 }
 
-export function encodeScopes(scopes: OriginalScope[], ranges: GeneratedRange[]) {
-  return encode({ scopes, ranges });
+// The codec supports multiple top-level scopes per source, this project uses
+// a single top-level scope (or null) per source.
+export function toScopesPerSource(scopes: (OriginalScope[] | null)[]): (OriginalScope | null)[] {
+  return scopes.map(sourceScopes => {
+    if (!sourceScopes || sourceScopes.length === 0) {
+      return null;
+    }
+    assert(sourceScopes.length === 1);
+    return sourceScopes[0];
+  });
 }
 
-export function decodeScopes(encodedScopes: string, names: string[]) {
-  let { scopes, ranges } = decode({ version: 3, sources: [], mappings: "", names, scopes: encodedScopes });
-  scopes = scopes.map(removeParentsFromScopes);
-  ranges = ranges.map(removeParentsFromRanges);
+export function fromScopesPerSource(scopes: (OriginalScope | null)[]): (OriginalScope[] | null)[] {
+  return scopes.map(scope => scope ? [scope] : null);
+}
+
+export function encodeScopes(scopes: (OriginalScope | null)[], ranges: GeneratedRange[]) {
+  return encode({ scopes: fromScopesPerSource(scopes), ranges });
+}
+
+export function decodeScopes(encodedScopes: (string | null)[], encodedRanges: string[], names: string[]) {
+  const decoded = decode({ version: 3, sources: [], mappings: "", names, scopes: encodedScopes, ranges: encodedRanges });
+  const scopes = toScopesPerSource(decoded.scopes).map(removeParentsFromScopes);
+  const ranges = decoded.ranges.map(removeParentsFromRanges);
   return { scopes, ranges };
 }
 
@@ -112,8 +128,8 @@ function removeParentsFromRanges(range: GeneratedRange): GeneratedRange {
 }
 
 export function addDecodedScopes(sourcemap: SourceMapJson) {
-  const { scopes: originalScopes, ranges: generatedRanges } = decode(sourcemap);
-  (sourcemap as any).originalScopes = originalScopes;
+  const { scopes, ranges: generatedRanges } = decode(sourcemap);
+  (sourcemap as any).originalScopes = toScopesPerSource(scopes);
   (sourcemap as any).generatedRanges = generatedRanges;
 }
 
@@ -149,7 +165,8 @@ interface Mapping {
 
 export function createSourceMapWithScopes(
   mappings: Mapping[],
-  encodedScopes: string,
+  encodedScopes: (string | null)[],
+  encodedRanges: string[],
   scopeNames: string[],
   sources = ["original.js"],
 ): SourceMapWithDecodedScopes {
@@ -177,6 +194,7 @@ export function createSourceMapWithScopes(
     sourcesContent: [],
     ignoreList: undefined,
     scopes: encodedScopes,
+    ranges: encodedRanges,
   };
   addDecodedScopes(sourceMap);
   return sourceMap as any as SourceMapWithDecodedScopes;

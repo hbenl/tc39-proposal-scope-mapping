@@ -31,7 +31,8 @@ Generated source:
 */
 
 const scopeNames = ["module", "block", "x", "x1", "x2"];
-const encodedScopes = "BCAAA,BCAAC,DE,BCDCA,DA,CDD,CCB,CAA,ECAA,ECAC,GE,EDDCC,GF,FBS,FCB,FA";
+const encodedScopes = ["BCAAA,BCAAC,DE,BCDCA,DA,CDD,CCB,CAA"];
+const encodedRanges = ["ECAAA,ECAAC,GE,EDDCAC,GF,FBS,FCB,FA"];
 const originalScopes: OriginalScope[] = [
   {
     start: { line: 0, column: 0 },
@@ -97,18 +98,20 @@ const sourceMap = createSourceMapWithScopes(
     generated: { line: 4, column: 2 },
   }],
   encodedScopes,
+  encodedRanges,
   scopeNames
 );
 
 test("decode scopes from sourcemap", () => {
-  const { scopes, ranges } = decodeScopes(encodedScopes, scopeNames);
+  const { scopes, ranges } = decodeScopes(encodedScopes, encodedRanges, scopeNames);
   expect(scopes).toStrictEqual(originalScopes);
   expect(ranges).toStrictEqual(generatedRanges);
 });
 
 test("encode scopes to sourcemap", () => {
-  const { scopes, names } = encodeScopes(originalScopes, generatedRanges);
+  const { scopes, ranges, names } = encodeScopes(originalScopes, generatedRanges);
   expect(scopes).toStrictEqual(encodedScopes);
+  expect(ranges).toStrictEqual(encodedRanges);
   expect(names).toStrictEqual(scopeNames);
 });
 

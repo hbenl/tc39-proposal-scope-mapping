@@ -1,4 +1,4 @@
-import { encode } from "@chrome-devtools/source-map-scopes-codec";
+import { encodeScopes } from "../../src/util";
 import { GeneratedRange, OriginalScope } from "../../src/types";
 import { mergeScopeMaps } from "../../src/mergeScopeMaps";
 
@@ -211,7 +211,7 @@ const generatedRanges: GeneratedRange = {
   ]
 };
 
-const { scopes: sourceMap1_1Scopes, names: sourceMap1_1Names } = encode({ scopes: originalScopes1, ranges: [intermediateGeneratedRanges1] });
+const { scopes: sourceMap1_1Scopes, ranges: sourceMap1_1Ranges, names: sourceMap1_1Names } = encodeScopes(originalScopes1, [intermediateGeneratedRanges1]);
 const sourceMap1_1 = {
   version: 3 as 3,
   file: "intermediate1.js",
@@ -219,9 +219,10 @@ const sourceMap1_1 = {
   mappings: "AAAA",
   names: sourceMap1_1Names!,
   scopes: sourceMap1_1Scopes!,
+  ranges: sourceMap1_1Ranges!,
 };
 
-const { scopes: sourceMap1_2Scopes, names: sourceMap1_2Names } = encode({ scopes: originalScopes2, ranges: [intermediateGeneratedRanges2] });
+const { scopes: sourceMap1_2Scopes, ranges: sourceMap1_2Ranges, names: sourceMap1_2Names } = encodeScopes(originalScopes2, [intermediateGeneratedRanges2]);
 const sourceMap1_2 = {
   version: 3 as 3,
   file: "intermediate2.js",
@@ -229,9 +230,10 @@ const sourceMap1_2 = {
   mappings: "AAAA;AACA;AACA;AACA;AAFA",
   names: sourceMap1_2Names!,
   scopes: sourceMap1_2Scopes!,
+  ranges: sourceMap1_2Ranges!,
 };
 
-const { scopes: sourceMap2Scopes, names: sourceMap2Names } = encode({ scopes: intermediateOriginalScopes, ranges: [generatedRanges] });
+const { scopes: sourceMap2Scopes, ranges: sourceMap2Ranges, names: sourceMap2Names } = encodeScopes(intermediateOriginalScopes, [generatedRanges]);
 const sourceMap2 = {
   version: 3 as 3,
   file: "generated.js",
@@ -239,6 +241,7 @@ const sourceMap2 = {
   mappings: "AAAA;ACCA;AAGA",
   names: sourceMap2Names!,
   scopes: sourceMap2Scopes!,
+  ranges: sourceMap2Ranges!,
 };
 
 test("merged scope map", () => {
